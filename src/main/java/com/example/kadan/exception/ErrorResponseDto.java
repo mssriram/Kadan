@@ -1,6 +1,6 @@
 package com.example.kadan.exception;
 
-public record AuthExceptionDto(
+public record ErrorResponseDto(
         String type,
         String message
 ) {
