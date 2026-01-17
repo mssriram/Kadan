@@ -8,7 +8,7 @@ public record GroupDto(
         @NotBlank(message = "Name must not be blank")
         String name,
         String description,
-        boolean simplifyDebts,
+        Boolean simplifyDebts,
         String currency,
         List<String> memberUsernames
 ) {
