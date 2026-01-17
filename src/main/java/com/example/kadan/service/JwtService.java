@@ -6,7 +6,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -48,9 +47,9 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, User user) {
+        final String userId = extractSubject(token);
+        return (userId.equals(user.getId().toString())) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
@@ -61,7 +60,7 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public String extractUsername(String jwt) {
+    public String extractSubject(String jwt) {
         return extractClaim(jwt, Claims::getSubject);
     }
 

@@ -3,10 +3,9 @@ package com.example.kadan.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginUserDto(
-        @NotBlank
+        @NotBlank(message = "Username cannot be blank")
         String username,
-        @NotBlank
-        String password,
-        String token
+        @NotBlank(message = "Password cannot be blank")
+        String password
 ) {
 }

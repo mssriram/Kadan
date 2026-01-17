@@ -1,0 +1,53 @@
+package com.example.kadan.controller;
+
+import com.example.kadan.dto.UpdateUserProfileDto;
+import com.example.kadan.dto.UserProfileDto;
+import com.example.kadan.entity.User;
+import com.example.kadan.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    /**
+     * Get current authenticated user's profile
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal User currentUser) {
+        UserProfileDto profile = userService.getCurrentUserProfile(currentUser);
+        return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * Update current authenticated user's profile
+     */
+    @PutMapping("/me")
+    public ResponseEntity<UserProfileDto> updateCurrentUserProfile(@AuthenticationPrincipal User currentUser, @Valid @RequestBody UpdateUserProfileDto updateDto) {
+        UserProfileDto updatedProfile = userService.updateUserProfile(currentUser, updateDto);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+    /**
+     * Get user by ID
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserProfileDto> getUserById(@PathVariable UUID userId) {
+        UserProfileDto profile = userService.getUserById(userId);
+        return ResponseEntity.ok(profile);
+    }
+}
