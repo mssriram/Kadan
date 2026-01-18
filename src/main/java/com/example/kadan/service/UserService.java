@@ -17,9 +17,9 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserProfileDto getCurrentUserProfile(User currentUser) {
-        return UserProfileDto.fromEntity(currentUser);
-    }
+//    public UserProfileDto getCurrentUserProfile(User currentUser) {
+//        return UserProfileDto.fromEntity(currentUser);
+//    }
 
     @Transactional
     public UserProfileDto updateUserProfile(User currentUser, UpdateUserProfileDto updateDto) {

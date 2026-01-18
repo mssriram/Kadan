@@ -35,3 +35,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+docs/db/logs
+docs/db/scripts
+docs/WORKPLAN.md
+src/main/resources/application.yml
+

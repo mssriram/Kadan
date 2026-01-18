@@ -24,27 +24,17 @@ public class UserController {
 
     private final UserService userService;
 
-    /**
-     * Get current authenticated user's profile
-     */
     @GetMapping("/me")
     public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal User currentUser) {
-        UserProfileDto profile = userService.getCurrentUserProfile(currentUser);
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(UserProfileDto.fromEntity(currentUser));
     }
 
-    /**
-     * Update current authenticated user's profile
-     */
     @PutMapping("/me")
     public ResponseEntity<UserProfileDto> updateCurrentUserProfile(@AuthenticationPrincipal User currentUser, @Valid @RequestBody UpdateUserProfileDto updateDto) {
         UserProfileDto updatedProfile = userService.updateUserProfile(currentUser, updateDto);
         return ResponseEntity.ok(updatedProfile);
     }
 
-    /**
-     * Get user by ID
-     */
     @GetMapping("/{userId}")
     public ResponseEntity<UserProfileDto> getUserById(@PathVariable UUID userId) {
         UserProfileDto profile = userService.getUserById(userId);
