@@ -10,6 +10,6 @@ public record GroupDto(
         String description,
         Boolean simplifyDebts,
         String currency,
-        List<String> memberUsernames
+        List<String> members
 ) {
 }

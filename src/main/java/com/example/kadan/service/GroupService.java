@@ -13,7 +13,8 @@ import com.example.kadan.repository.GroupMemberRepository;
 import com.example.kadan.repository.GroupRepository;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -33,16 +35,17 @@ public class GroupService {
 
     @Transactional
     public GroupResponseDto getGroupById(User currentUser, UUID id) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        boolean isMember = groupMemberRepository.existsByGroupAndUser(group, currentUser);
+        Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        boolean isMember = isUserMemberOfGroup(group, currentUser);
 
-        if (!isMember || group.getStatus().equals(GroupStatus.DELETED)) {
+        if (!isMember) {
             throw new EntityNotFoundException("Group not found");
         }
 
         return GroupResponseDto.fromEntity(group);
     }
 
+    @Transactional
     public List<GroupResponseDto> getGroups(User currentUser) {
         List<Group> groups = groupRepository.findAllByMembersAndStatusNot(currentUser, GroupStatus.DELETED);
         if (groups.isEmpty()) {
@@ -51,11 +54,12 @@ public class GroupService {
         return groups.stream().map(GroupResponseDto::fromEntityWithoutMembers).collect(Collectors.toList());
     }
 
-    public GroupResponseDto updateGroup(User currentUser, @Valid UUID id, @Valid UpdateGroupDto groupDto) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        boolean isMember = groupMemberRepository.existsByGroupAndUser(group, currentUser);
+    @Transactional
+    public GroupResponseDto updateGroup(User currentUser, UUID id, UpdateGroupDto groupDto) {
+        Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        boolean isMember = isUserMemberOfGroup(group, currentUser);
 
-        if (!isMember || group.getStatus().equals(GroupStatus.DELETED)) {
+        if (!isMember) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -69,6 +73,26 @@ public class GroupService {
     }
 
     @Transactional
+    public GroupResponseDto addMemberToGroup(User currentUser, UUID groupId, UUID memberId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        boolean isMember = isUserMemberOfGroup(group, currentUser);
+        if (!isMember) {
+            throw new EntityNotFoundException("Group not found");
+        }
+
+        User newMember = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        try {
+            GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
+            groupMemberRepository.save(groupMember);
+        } catch (DataIntegrityViolationException e) {
+            log.info("User {} is already a member of group {}", memberId, groupId);
+        }
+
+        return GroupResponseDto.fromEntity(group);
+    }
+
+    @Transactional
     public CreateGroupResponseDto createGroup(User currentUser, GroupDto groupDto) {
         Group group = new Group();
         group.setName(groupDto.name());
@@ -78,7 +102,7 @@ public class GroupService {
         group.setStatus(GroupStatus.ACTIVE);
         Group savedGroup = groupRepository.save(group);
 
-        List<User> members = userRepository.findByUsernameIn(groupDto.memberUsernames());
+        List<User> members = userRepository.findByUsernameIn(groupDto.members());
 
         List<GroupMember> groupMembers = members.stream()
                 .map(user -> user == currentUser ?
@@ -98,15 +122,32 @@ public class GroupService {
         return CreateGroupResponseDto.fromEntity(savedGroup, savedUsers);
     }
 
-    public void deleteGroup(User currentUser, UUID id) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        boolean isMember = groupMemberRepository.existsByGroupAndUser(group, currentUser);
+    @Transactional
+    public void removeMemberFromGroup(User currentUser, UUID groupId, UUID memberId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        boolean isMember = isUserMemberOfGroup(group, currentUser);
 
-        if (!isMember || group.getStatus().equals(GroupStatus.DELETED)) {
+        if (!isMember) {
             throw new EntityNotFoundException("Group not found");
         }
 
-        group.setStatus(GroupStatus.DELETED);
-        groupRepository.save(group);
+        User memberToRemove = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        groupMemberRepository.deleteByGroupAndUser(group, memberToRemove);
+    }
+
+    @Transactional
+    public void deleteGroup(User currentUser, UUID id) {
+        Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        boolean isMember = isUserMemberOfGroup(group, currentUser);
+
+        if (!isMember) {
+            throw new EntityNotFoundException("Group not found");
+        }
+
+        groupRepository.delete(group);
+    }
+
+    private boolean isUserMemberOfGroup(Group group, User user) {
+        return group.getMembers().stream().anyMatch(member -> member.getId().equals(user.getId()));
     }
 }

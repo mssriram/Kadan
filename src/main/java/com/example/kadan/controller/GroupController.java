@@ -30,29 +30,40 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<GroupResponseDto> getGroupById(@AuthenticationPrincipal User currentUser, @Valid @PathVariable UUID id) {
-        GroupResponseDto response = groupService.getGroupById(currentUser, id);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping
     public ResponseEntity<List<GroupResponseDto>> getGroups(@AuthenticationPrincipal User currentUser) {
         List<GroupResponseDto> response = groupService.getGroups(currentUser);
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<GroupResponseDto> getGroupById(@AuthenticationPrincipal User currentUser, @Valid @PathVariable UUID id) {
+        GroupResponseDto response = groupService.getGroupById(currentUser, id);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<GroupResponseDto> updateGroup(@AuthenticationPrincipal User currentUser, @Valid @RequestBody UpdateGroupDto groupDto, @Valid @PathVariable UUID id) {
+    public ResponseEntity<GroupResponseDto> updateGroup(@AuthenticationPrincipal User currentUser, @RequestBody UpdateGroupDto groupDto, @PathVariable UUID id) {
         GroupResponseDto response = groupService.updateGroup(currentUser, id, groupDto);
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{groupId}/members/{memberId}")
+    public ResponseEntity<GroupResponseDto> addMemberToGroup(@AuthenticationPrincipal User currentUser, @PathVariable UUID groupId, @PathVariable UUID memberId) {
+        GroupResponseDto response = groupService.addMemberToGroup(currentUser, groupId, memberId);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal User currentUser, @Valid @RequestBody GroupDto groupDto) {
         CreateGroupResponseDto response = groupService.createGroup(currentUser, groupDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{groupId}/members/{memberId}")
+    public ResponseEntity<GroupResponseDto> removeMemberFromGroup(@AuthenticationPrincipal User currentUser, @PathVariable UUID groupId, @PathVariable UUID memberId) {
+        groupService.removeMemberFromGroup(currentUser, groupId, memberId);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
