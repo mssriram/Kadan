@@ -13,9 +13,9 @@ import com.example.kadan.repository.GroupMemberRepository;
 import com.example.kadan.repository.GroupRepository;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
