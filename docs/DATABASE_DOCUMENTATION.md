@@ -233,7 +233,6 @@ CREATE TABLE expense_splits (
     expense_id  UUID NOT NULL,
     user_id     UUID NOT NULL,
     amount      DECIMAL(15, 2) NOT NULL,
-    percentage  DECIMAL(5, 2),
     is_settled  BOOLEAN DEFAULT FALSE,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -241,8 +240,7 @@ CREATE TABLE expense_splits (
     CONSTRAINT fk_expense_splits_expense_id FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
     CONSTRAINT fk_expense_splits_user_id FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT uk_expense_splits_expense_user UNIQUE (expense_id, user_id),
-    CONSTRAINT chk_expense_splits_amount CHECK (amount >= 0),
-    CONSTRAINT chk_expense_splits_percentage CHECK (percentage IS NULL OR (percentage >= 0 AND percentage <= 100))
+    CONSTRAINT chk_expense_splits_amount CHECK (amount >= 0)
 );
 
 -- Indexes
@@ -251,16 +249,15 @@ CREATE INDEX idx_expense_splits_user_id ON expense_splits(user_id);
 CREATE INDEX idx_expense_splits_is_settled ON expense_splits(is_settled);
 ```
 
-| Column     | Type          | Constraints     | Description                      |
-|------------|---------------|-----------------|----------------------------------|
-| id         | UUID          | PK, NOT NULL    | Unique identifier                |
-| expense_id | UUID          | FK, NOT NULL    | Reference to expenses table      |
-| user_id    | UUID          | FK, NOT NULL    | User responsible for this split  |
-| amount     | DECIMAL(15,2) | NOT NULL, >= 0  | Amount owed by user              |
-| percentage | DECIMAL(5,2)  | NULLABLE, 0-100 | Percentage share (for reference) |
-| is_settled | BOOLEAN       | DEFAULT FALSE   | Whether this split is settled    |
-| created_at | TIMESTAMP     | DEFAULT NOW     | Record creation timestamp        |
-| updated_at | TIMESTAMP     | DEFAULT NOW     | Last update timestamp            |
+| Column     | Type          | Constraints    | Description                     |
+|------------|---------------|----------------|---------------------------------|
+| id         | UUID          | PK, NOT NULL   | Unique identifier               |
+| expense_id | UUID          | FK, NOT NULL   | Reference to expenses table     |
+| user_id    | UUID          | FK, NOT NULL   | User responsible for this split |
+| amount     | DECIMAL(15,2) | NOT NULL, >= 0 | Amount owed by user             |
+| is_settled | BOOLEAN       | DEFAULT FALSE  | Whether this split is settled   |
+| created_at | TIMESTAMP     | DEFAULT NOW    | Record creation timestamp       |
+| updated_at | TIMESTAMP     | DEFAULT NOW    | Last update timestamp           |
 
 ---
 

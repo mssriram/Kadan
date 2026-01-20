@@ -36,9 +36,7 @@ public class GroupService {
     @Transactional
     public GroupResponseDto getGroupById(User currentUser, UUID id) {
         Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        boolean isMember = isUserMemberOfGroup(group, currentUser);
-
-        if (!isMember) {
+        if (!group.hasMember(currentUser.getId())) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -57,9 +55,7 @@ public class GroupService {
     @Transactional
     public GroupResponseDto updateGroup(User currentUser, UUID id, UpdateGroupDto groupDto) {
         Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        boolean isMember = isUserMemberOfGroup(group, currentUser);
-
-        if (!isMember) {
+        if (!group.hasMember(currentUser.getId())) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -75,8 +71,7 @@ public class GroupService {
     @Transactional
     public GroupResponseDto addMemberToGroup(User currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        boolean isMember = isUserMemberOfGroup(group, currentUser);
-        if (!isMember) {
+        if (!group.hasMember(currentUser.getId())) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -125,9 +120,7 @@ public class GroupService {
     @Transactional
     public void removeMemberFromGroup(User currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        boolean isMember = isUserMemberOfGroup(group, currentUser);
-
-        if (!isMember) {
+        if (!group.hasMember(currentUser.getId())) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -138,16 +131,11 @@ public class GroupService {
     @Transactional
     public void deleteGroup(User currentUser, UUID id) {
         Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        boolean isMember = isUserMemberOfGroup(group, currentUser);
-
-        if (!isMember) {
+        if (!group.hasMember(currentUser.getId())) {
             throw new EntityNotFoundException("Group not found");
         }
 
         groupRepository.delete(group);
     }
 
-    private boolean isUserMemberOfGroup(Group group, User user) {
-        return group.getMembers().stream().anyMatch(member -> member.getId().equals(user.getId()));
-    }
 }

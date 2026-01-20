@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,8 +24,8 @@ import java.util.UUID;
 @Table(name = "expense_splits")
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class ExpenseSplit {
 
     @Id
@@ -32,9 +34,6 @@ public class ExpenseSplit {
 
     @Column(precision = 19, scale = 2, nullable = false)
     private BigDecimal amount;
-
-    @Column(precision = 19, scale = 2, nullable = false)
-    private BigDecimal percentage;
 
     @Column(name = "is_settled", nullable = false)
     private Boolean isSettled;

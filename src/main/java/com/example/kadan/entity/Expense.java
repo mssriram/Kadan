@@ -3,16 +3,20 @@ package com.example.kadan.entity;
 import com.example.kadan.dto.enums.SplitType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -25,8 +29,8 @@ import java.util.UUID;
 @Table(name = "expenses")
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Expense {
 
     @Id
@@ -34,7 +38,6 @@ public class Expense {
     private UUID id;
     private String currency = "INR";
     private String description;
-    private String notes;
 
     @Column(precision = 19, scale = 2, nullable = false)
     private BigDecimal amount;
@@ -42,6 +45,7 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "split_type", nullable = false)
     private SplitType splitType;
 
@@ -51,6 +55,7 @@ public class Expense {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "paid_by", nullable = false)
+    @Setter
     private User paidBy;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

@@ -61,4 +61,8 @@ public class Group {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    public boolean hasMember(UUID userId) {
+        return getMembers().stream().anyMatch(member -> member.getId().equals(userId));
+    }
 }

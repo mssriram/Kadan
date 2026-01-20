@@ -3,6 +3,7 @@ package com.example.kadan.repository;
 import com.example.kadan.dto.enums.GroupStatus;
 import com.example.kadan.entity.Group;
 import com.example.kadan.entity.User;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +17,6 @@ public interface GroupRepository extends CrudRepository<Group, UUID> {
     Optional<Group> findByIdAndStatusNot(UUID id, GroupStatus status);
 
     List<Group> findAllByMembersAndStatusNot(User currentUser, GroupStatus status);
+
+    Optional<User> getMemberById(UUID uuid);
 }
