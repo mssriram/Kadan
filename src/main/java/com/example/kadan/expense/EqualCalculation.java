@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class EqualCalculation implements ExpenseCalculationStrategy {
@@ -20,17 +20,10 @@ public class EqualCalculation implements ExpenseCalculationStrategy {
     }
 
     @Override
-    public List<ExpenseSplit> calculateExpense(Expense expense, Map<User, BigDecimal> memberSplitDto) {
+    public Map<User, BigDecimal> calculateExpense(Expense expense, Map<User, BigDecimal> memberSplitDto) {
         BigDecimal memberCount = BigDecimal.valueOf(memberSplitDto.size());
         BigDecimal splitAmount = expense.getAmount().divide(memberCount, 2, RoundingMode.DOWN);
 
-        return memberSplitDto.keySet().stream().map(user ->
-            ExpenseSplit.builder()
-                .expense(expense)
-                .user(user)
-                .amount(splitAmount)
-                .isSettled(false)
-                .build()
-        ).toList();
+        return memberSplitDto.keySet().stream().collect(Collectors.toMap(user -> user, _ -> splitAmount));
     }
 }

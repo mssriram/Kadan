@@ -7,7 +7,6 @@ import com.example.kadan.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -20,14 +19,7 @@ public class ExactCalculation implements ExpenseCalculationStrategy {
     }
 
     @Override
-    public List<ExpenseSplit> calculateExpense(Expense amount, Map<User, BigDecimal> memberSplitDto) {
-        return memberSplitDto.entrySet().stream().map(entry ->
-            ExpenseSplit.builder()
-                .expense(amount)
-                .user(entry.getKey())
-                .amount(entry.getValue())
-                .isSettled(false)
-                .build()
-        ).toList();
+    public Map<User, BigDecimal> calculateExpense(Expense amount, Map<User, BigDecimal> memberSplitDto) {
+        return memberSplitDto;
     }
 }

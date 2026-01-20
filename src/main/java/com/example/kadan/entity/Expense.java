@@ -1,5 +1,6 @@
 package com.example.kadan.entity;
 
+import com.example.kadan.dto.UpdateExpenseDto;
 import com.example.kadan.dto.enums.SplitType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,12 +26,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Table(name = "expenses")
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class Expense {
 
@@ -62,6 +66,10 @@ public class Expense {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @OneToMany(mappedBy = "expense", fetch = FetchType.LAZY)
+    @Setter
+    List<ExpenseSplit> expenseSplits;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
@@ -69,4 +77,12 @@ public class Expense {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    public void modifyExpense(UpdateExpenseDto request) {
+        if (request.amount() != null) this.amount = request.amount();
+        if (request.currency() != null) this.currency = request.currency();
+        if (request.description() != null) this.description = request.description();
+        if (request.date() != null) this.expenseDate = request.date();
+        if (request.splitType() != null) this.splitType = request.splitType();
+    }
 }

@@ -100,7 +100,7 @@ public class GroupService {
         List<User> members = userRepository.findByUsernameIn(groupDto.members());
 
         List<GroupMember> groupMembers = members.stream()
-                .map(user -> user == currentUser ?
+                .map(user -> user.getId() == currentUser.getId() ?
                         new GroupMember(savedGroup, user, UserRole.OWNER) :
                         new GroupMember(savedGroup, user, UserRole.MEMBER))
                 .toList();

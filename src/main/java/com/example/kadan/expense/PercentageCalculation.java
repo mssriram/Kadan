@@ -8,8 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class PercentageCalculation implements ExpenseCalculationStrategy {
@@ -20,17 +21,16 @@ public class PercentageCalculation implements ExpenseCalculationStrategy {
     }
 
     @Override
-    public List<ExpenseSplit> calculateExpense(Expense amount, Map<User, BigDecimal> memberSplitDto) {
-        return memberSplitDto.entrySet().stream().map(entry -> {
-            BigDecimal percentage = entry.getValue();
-            BigDecimal splitAmount = amount.getAmount().multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
+    public Map<User, BigDecimal> calculateExpense(Expense amount, Map<User, BigDecimal> memberSplitDto) {
+        Map<User, BigDecimal> result = new HashMap<>();
+        for (User user : memberSplitDto.keySet()) {
+            BigDecimal percentage = memberSplitDto.get(user);
+            //calculate actual value from percentage
+            BigDecimal actualAmount = amount.getAmount().multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
 
-            return ExpenseSplit.builder()
-                    .expense(amount)
-                    .user(entry.getKey())
-                    .amount(splitAmount)
-                    .isSettled(false)
-                    .build();
-        }).toList();
+            result.put(user, actualAmount);
+        }
+
+        return result;
     }
 }

@@ -2,7 +2,11 @@ package com.example.kadan.validator;
 
 import com.example.kadan.dto.CreateExpenseDto;
 import com.example.kadan.dto.MemberSplitDto;
+import com.example.kadan.dto.UpdateExpenseDto;
 import com.example.kadan.dto.enums.SplitType;
+import io.jsonwebtoken.lang.Objects;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -20,6 +24,13 @@ public class ExpenseValidator {
         validateNoDuplicateMembers(request.members());
         validateSplitType(request.splitType(), request.members(), request.amount());
     }
+
+//    public static void validateUpdateExpense(UpdateExpenseDto request) {
+//        if (StringUtils.isAllBlank(request.description(), request.currency())) {
+//            ObjectUtils.allNull(request)
+//        }
+//        if ()
+//    }
 
     private static void validateBigDecimal(BigDecimal amount, List<MemberSplitDto> members) {
         if (amount.scale() > 2) {
