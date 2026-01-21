@@ -4,15 +4,14 @@ import com.example.kadan.dto.CreateExpenseDto;
 import com.example.kadan.dto.MemberSplitDto;
 import com.example.kadan.dto.UpdateExpenseDto;
 import com.example.kadan.dto.enums.SplitType;
-import io.jsonwebtoken.lang.Objects;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,23 +19,32 @@ import java.util.UUID;
 public class ExpenseValidator {
 
     public static void validateCreateExpense(CreateExpenseDto request) {
-        validateBigDecimal(request.amount(), request.members());
+        validateAmount(request.amount());
+//        validateDate(request.date());
+        validateShareBigDecimal(request.members());
         validateNoDuplicateMembers(request.members());
         validateSplitType(request.splitType(), request.members(), request.amount());
     }
 
-//    public static void validateUpdateExpense(UpdateExpenseDto request) {
-//        if (StringUtils.isAllBlank(request.description(), request.currency())) {
-//            ObjectUtils.allNull(request)
-//        }
-//        if ()
-//    }
+    public static void validateUpdateExpense(UpdateExpenseDto request) {
+        //validates only if all three fields are provided
+        if (ObjectUtils.allNotNull(request.splitType(), request.members(), request.amount())) {
+            validateAmount(request.amount());
+            validateShareBigDecimal(request.members());
+            validateNoDuplicateMembers(request.members());
+            validateSplitType(request.splitType(), request.members(), request.amount());
+        } else if (ObjectUtils.anyNotNull(request.splitType(), request.members(), request.amount())) {
+            throw new IllegalArgumentException("For updating expense, splitType, members and amount must all be provided");
+        }
+    }
 
-    private static void validateBigDecimal(BigDecimal amount, List<MemberSplitDto> members) {
-        if (amount.scale() > 2) {
+    private static void validateAmount(BigDecimal amount) {
+        if (Objects.nonNull(amount) && amount.scale() > 2) {
             throw new IllegalArgumentException("Amount cannot have more than 2 decimal places");
         }
+    }
 
+    private static void validateShareBigDecimal(List<MemberSplitDto> members) {
         for (MemberSplitDto member : members) {
             if (member.share() != null && member.share().scale() > 2) {
                 throw new IllegalArgumentException("Member share cannot have more than 2 decimal places: " + member.id());

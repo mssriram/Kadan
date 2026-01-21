@@ -16,7 +16,7 @@ public record ExpenseDto(
         BigDecimal amount,
         LocalDate date,
         SplitType splitType,
-        UUID paidBy,
+        UserProfileDto paidBy,
         List<MemberSplitResponseDto> shares,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
@@ -29,7 +29,7 @@ public record ExpenseDto(
                 expense.getAmount(),
                 expense.getExpenseDate(),
                 expense.getSplitType(),
-                expense.getPaidBy().getId(),
+                UserProfileDto.fromEntity(expense.getPaidBy()),
                 expense.getExpenseSplits().stream()
                         .map(MemberSplitResponseDto::fromEntity)
                         .toList(),

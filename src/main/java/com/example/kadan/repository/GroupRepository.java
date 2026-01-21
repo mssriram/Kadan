@@ -3,7 +3,6 @@ package com.example.kadan.repository;
 import com.example.kadan.dto.enums.GroupStatus;
 import com.example.kadan.entity.Group;
 import com.example.kadan.entity.User;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +19,7 @@ public interface GroupRepository extends CrudRepository<Group, UUID> {
 
     List<Group> findAllByMembersAndStatusNot(User currentUser, GroupStatus status);
 
-    @Query("SELECT u FROM Group g JOIN g.members u WHERE g.id = :groupId AND u.id = :userId AND g.status != :status")
+    @Query("SELECT u FROM Group g JOIN g.members u WHERE g.id = :groupId AND u.id = :userId AND g.status = :status")
     Optional<User> findMemberByGroupIdAndUserId(@Param("groupId") UUID groupId,
                                                 @Param("userId") UUID userId,
                                                 @Param("status") GroupStatus status);

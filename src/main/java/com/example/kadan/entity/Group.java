@@ -38,7 +38,9 @@ public class Group {
     @Column(nullable = false)
     private String name;
     private String description;
-    private String currency = "INR";
+
+    @Column(insertable = false)
+    private String currency;
 
     @Column(name = "simplify_debts")
     private boolean simplifyDebts;

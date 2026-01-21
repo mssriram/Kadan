@@ -31,8 +31,8 @@ public class AuthService {
         }
 
         User user = new User();
-        user.setUsername(userDto.username());
-        user.setEmail(userDto.email());
+        user.setUsername(userDto.username().trim());
+        user.setEmail(userDto.email().trim());
         user.setPasswordHash(passwordEncoder.encode(userDto.password()));
         user.setStatus(UserStatus.ACTIVE);
 

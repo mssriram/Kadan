@@ -48,8 +48,8 @@ public class User implements UserDetails {
     @Column(name = "display_name")
     private String displayName;
 
-    @Column(name = "default_currency")
-    private String defaultCurrency = "INR";
+    @Column(name = "default_currency", insertable = false)
+    private String defaultCurrency;
 
     @Enumerated(EnumType.STRING)
     private UserStatus status;
