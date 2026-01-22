@@ -12,8 +12,6 @@ import java.util.UUID;
 @Repository
 public interface GroupMemberRepository extends CrudRepository<GroupMember, UUID> {
 
-    boolean existsByGroupAndUser(Group group, User currentUser);
-
     void deleteByGroupAndUser(Group group, User user);
 
     List<GroupMember> findAllByGroup(Group group);

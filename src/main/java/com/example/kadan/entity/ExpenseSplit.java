@@ -1,60 +1,50 @@
 package com.example.kadan.entity;
 
-import com.example.kadan.dto.enums.GroupStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
-@Table(name = "groups")
+@Table(name = "expense_splits")
 @Entity
 @Getter
-@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
-public class Group {
+public class ExpenseSplit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id;
 
-    @Column(nullable = false)
-    private String name;
-    private String description;
+    @Column(precision = 19, scale = 2, nullable = false)
+    private BigDecimal amount;
 
-    @Column(insertable = false)
-    private String currency;
+    @Column(name = "is_settled", nullable = false)
+    private Boolean isSettled;
 
-    @Column(name = "simplify_debts")
-    private boolean simplifyDebts;
-
-    @Enumerated(EnumType.STRING)
-    private GroupStatus status = GroupStatus.ACTIVE;
-
-    @JoinColumn(name = "created_by", updatable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private User createdBy;
+    @JoinColumn(name = "expense_id", nullable = false)
+    private Expense expense;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "groups", fetch = FetchType.LAZY)
-    private List<User> members;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -63,8 +53,4 @@ public class Group {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    public boolean hasMember(UUID userId) {
-        return getMembers().stream().anyMatch(member -> member.getId().equals(userId));
-    }
 }

@@ -4,10 +4,12 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,12 +20,13 @@ public class GlobalExceptionHandler {
 
     public static final String VALIDATION = "VALIDATION_ERROR";
     public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
+    public static final String DATE_FORMAT_VALIDATION_ERROR = "Date should be in the format YYYY-MM-DD";
 
-    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class})
+    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<ValidationErrorResponseDto> handleValidationException(Exception ex) {
         switch (ex) {
             case IllegalArgumentException illegalArgEx -> {
-                log.info(illegalArgEx.getMessage());
+                log.info("Validation failed: {}", illegalArgEx.getMessage());
                 Map<String, String> message = Map.of("error", illegalArgEx.getMessage());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponseDto(VALIDATION, message));
             }
@@ -33,6 +36,15 @@ public class GlobalExceptionHandler {
                         .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponseDto(VALIDATION, message));
+            }
+            case HttpMessageNotReadableException dateTimeEx -> {
+                if (dateTimeEx.getCause() instanceof InvalidFormatException) {
+                    log.info("Validation failed: {}", dateTimeEx.getMessage());
+                    Map<String, String> message = Map.of("error", DATE_FORMAT_VALIDATION_ERROR);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponseDto(VALIDATION, message));
+                } else {
+                    throw dateTimeEx;
+                }
             }
             default -> throw new RuntimeException("Unexpected value: " + ex);
         }
