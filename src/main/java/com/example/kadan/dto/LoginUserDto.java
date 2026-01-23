@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record LoginUserDto(
         @NotBlank(message = "Username cannot be blank")
-        String username,
+        String email,
         @NotBlank(message = "Password cannot be blank")
         String password
 ) {

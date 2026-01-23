@@ -5,6 +5,7 @@ import com.example.kadan.dto.RegisterUserDto;
 import com.example.kadan.dto.enums.UserStatus;
 import com.example.kadan.entity.User;
 import com.example.kadan.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -40,9 +41,9 @@ public class AuthService {
     }
 
     public User authenticateUser(@Valid LoginUserDto loginUserDto) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginUserDto.username(), loginUserDto.password()));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginUserDto.email(), loginUserDto.password()));
 
-        return userRepository.findByUsername(loginUserDto.username()).orElseThrow();
+        return userRepository.findByEmail(loginUserDto.email()).orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 }
 

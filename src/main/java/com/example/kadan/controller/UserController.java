@@ -1,5 +1,6 @@
 package com.example.kadan.controller;
 
+import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.UpdateUserProfileDto;
 import com.example.kadan.dto.UserProfileDto;
 import com.example.kadan.entity.User;
@@ -24,14 +25,15 @@ public class UserController {
 
     private final UserService userService;
 
+    //TODO update to jwtuserprincipal
     @GetMapping("/me")
-    public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(UserProfileDto.fromEntity(currentUser));
+    public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal User principal) {
+        return ResponseEntity.ok(UserProfileDto.fromEntity(principal));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserProfileDto> updateCurrentUserProfile(@AuthenticationPrincipal User currentUser, @Valid @RequestBody UpdateUserProfileDto updateDto) {
-        UserProfileDto updatedProfile = userService.updateUserProfile(currentUser, updateDto);
+    public ResponseEntity<UserProfileDto> updateCurrentUserProfile(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody UpdateUserProfileDto updateDto) {
+        UserProfileDto updatedProfile = userService.updateUserProfile(principal.id(), updateDto);
         return ResponseEntity.ok(updatedProfile);
     }
 
