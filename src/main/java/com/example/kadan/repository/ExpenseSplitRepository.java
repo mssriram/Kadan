@@ -22,7 +22,7 @@ public interface ExpenseSplitRepository extends JpaRepository<ExpenseSplit, UUID
           COALESCE(paid.total_paid, 0) - COALESCE(owed.total_owed, 0) AS netBalance
         FROM
           (
-            SELECT DISTINCT es.user_id 
+            SELECT DISTINCT es.user_id
               FROM expense_splits es
               JOIN expenses e ON es.expense_id = e.id
              WHERE e.group_id = :groupId
