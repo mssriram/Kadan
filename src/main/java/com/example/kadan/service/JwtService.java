@@ -26,6 +26,9 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    @Value("${jwt.issuer}")
+    private String jwtIssuer;
+
     public String generateToken(User user) {
         return generateToken(new HashMap<>(), user.getId().toString());
     }
@@ -34,11 +37,10 @@ public class JwtService {
         return buildToken(extraClaims, id);
     }
 
-    //TODO externalise issuer value
     private String buildToken(Map<String, Object> extraClaims, String id) {
         return Jwts.builder()
                 .claims(extraClaims)
-                .issuer("kadan")
+                .issuer(jwtIssuer)
                 .subject(id)
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(Instant.now().plusSeconds(jwtExpiration)))
@@ -50,40 +52,12 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-//    public boolean isTokenValid(String token, User user) {
-//        final String userId = extractSubject(token);
-//        return (userId.equals(user.getId().toString())) && !isTokenExpired(token);
-//    }
-
-//    /**
-//     * Validates token without requiring a User entity (no DB call).
-//     * Just checks signature and expiration.
-//     */
-//    public boolean isTokenValid(String token) {
-//        try {
-//            return !isTokenExpired(token);
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-
-    /**
-     * Extracts a lightweight principal from the JWT claims.
-     * No database lookup required.
-     */
     public JwtUserPrincipal extractPrincipal(String token) {
         String subject = extractSubject(token);
         UUID userId = UUID.fromString(subject);
         return new JwtUserPrincipal(userId);
     }
 
-//    private boolean isTokenExpired(String token) {
-//        return extractExpiration(token).before(new Date());
-//    }
-
-//    private Date extractExpiration(String token) {
-//        return extractClaim(token, Claims::getExpiration);
-//    }
 
     public String extractSubject(String jwt) {
         return extractClaim(jwt, Claims::getSubject);
