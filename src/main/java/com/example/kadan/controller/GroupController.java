@@ -1,5 +1,6 @@
 package com.example.kadan.controller;
 
+import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.CreateGroupResponseDto;
 import com.example.kadan.dto.GroupDto;
 import com.example.kadan.dto.GroupResponseDto;
@@ -30,45 +31,48 @@ public class GroupController {
 
     private final GroupService groupService;
 
+    //TODO update to use jwtauthprincipal
     @GetMapping
-    public ResponseEntity<List<GroupResponseDto>> getGroups(@AuthenticationPrincipal User currentUser) {
-        List<GroupResponseDto> response = groupService.getGroups(currentUser);
+    public ResponseEntity<List<GroupResponseDto>> getGroups(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        List<GroupResponseDto> response = groupService.getGroups(principal.id());
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<GroupResponseDto> getGroupById(@AuthenticationPrincipal User currentUser, @Valid @PathVariable UUID id) {
-        GroupResponseDto response = groupService.getGroupById(currentUser, id);
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupResponseDto> getGroupById(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @PathVariable UUID groupId) {
+        GroupResponseDto response = groupService.getGroupById(principal.id(), groupId);
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<GroupResponseDto> updateGroup(@AuthenticationPrincipal User currentUser, @RequestBody UpdateGroupDto groupDto, @PathVariable UUID id) {
-        GroupResponseDto response = groupService.updateGroup(currentUser, id, groupDto);
+    @PutMapping("/{groupId}")
+    public ResponseEntity<GroupResponseDto> updateGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody UpdateGroupDto groupDto, @PathVariable UUID groupId) {
+        GroupResponseDto response = groupService.updateGroup(principal.id(), groupId, groupDto);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{groupId}/members/{memberId}")
-    public ResponseEntity<GroupResponseDto> addMemberToGroup(@AuthenticationPrincipal User currentUser, @PathVariable UUID groupId, @PathVariable UUID memberId) {
-        GroupResponseDto response = groupService.addMemberToGroup(currentUser, groupId, memberId);
+    public ResponseEntity<GroupResponseDto> addMemberToGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID memberId) {
+        GroupResponseDto response = groupService.addMemberToGroup(principal.id(), groupId, memberId);
         return ResponseEntity.ok(response);
     }
 
+    //TODO figure out to fix adding members to group, i.e if one or more members doesnt exist.
+    //TODO probably shouldnt return created group with members. might be a security issue.
     @PostMapping
-    public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal User currentUser, @Valid @RequestBody GroupDto groupDto) {
-        CreateGroupResponseDto response = groupService.createGroup(currentUser, groupDto);
+    public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody GroupDto groupDto) {
+        CreateGroupResponseDto response = groupService.createGroup(principal.id(), groupDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")
-    public ResponseEntity<GroupResponseDto> removeMemberFromGroup(@AuthenticationPrincipal User currentUser, @PathVariable UUID groupId, @PathVariable UUID memberId) {
-        groupService.removeMemberFromGroup(currentUser, groupId, memberId);
+    public ResponseEntity<GroupResponseDto> removeMemberFromGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID memberId) {
+        groupService.removeMemberFromGroup(principal.id(), groupId, memberId);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGroup(@AuthenticationPrincipal User currentUser, @Valid @PathVariable UUID id) {
-        groupService.deleteGroup(currentUser, id);
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Void> deleteGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @PathVariable UUID groupId) {
+        groupService.deleteGroup(principal.id(), groupId);
         return ResponseEntity.ok().build();
     }
 }

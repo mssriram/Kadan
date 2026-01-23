@@ -40,9 +40,9 @@ public class ExpenseService {
     private final DebtCalculationFactory balanceCalcFactory;
 
     @Transactional
-    public List<ExpenseDto> getAllExpenses(User currentUser, UUID groupId) {
+    public List<ExpenseDto> getAllExpenses(UUID currentUser, UUID groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(currentUser.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -51,9 +51,9 @@ public class ExpenseService {
     }
 
     @Transactional
-    public ExpenseDto getExpenseById(User currentUser, UUID groupId, UUID expenseId) {
+    public ExpenseDto getExpenseById(UUID currentUser, UUID groupId, UUID expenseId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(currentUser.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
 
@@ -62,11 +62,13 @@ public class ExpenseService {
     }
 
     @Transactional
-    public void createExpense(User currentUser, UUID groupId, CreateExpenseDto request) {
+    public void createExpense(UUID currentUser, UUID groupId, CreateExpenseDto request) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(currentUser.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
+
+        User expenseCreator = group.getMembers().stream().filter(user -> user.getId().equals(currentUser)).findFirst().get();
 
         Expense expense = Expense.builder()
                 .amount(request.amount())
@@ -75,12 +77,15 @@ public class ExpenseService {
                 .expenseDate(request.date())
                 .splitType(request.splitType())
                 .group(group)
-                .createdBy(currentUser)
-                .paidBy(currentUser)
+                .createdBy(expenseCreator)
+                .paidBy(expenseCreator)
                 .build();
 
-        if (!request.paidBy().equals(currentUser.getId())) {
-            User paidByUser = groupRepository.findMemberByGroupIdAndUserId(group.getId(), request.paidBy(), GroupStatus.ACTIVE).orElseThrow(() -> new EntityNotFoundException("paidBy user is not a member of the group"));
+        if (!request.paidBy().equals(currentUser)) {
+            if (!group.hasMember(request.paidBy())) {
+                throw new EntityNotFoundException("paidBy user is not a member of the group");
+            }
+            User paidByUser = group.getMembers().stream().filter(user -> user.getId().equals(request.paidBy())).findFirst().get();
             expense.setPaidBy(paidByUser);
         }
         Expense savedExpense = expenseRepository.save(expense);
@@ -90,9 +95,9 @@ public class ExpenseService {
     }
 
     @Transactional
-    public void updateExpense(User currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
+    public void updateExpense(UUID currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(currentUser.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
         Expense expense = expenseRepository.findById(expenseId).orElseThrow(() -> new EntityNotFoundException("Expense not found"));
@@ -147,9 +152,9 @@ public class ExpenseService {
                 .toList();
     }
 
-    public void deleteExpense(User currentUser, UUID groupId, UUID expenseId) {
+    public void deleteExpense(UUID currentUser, UUID groupId, UUID expenseId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(currentUser.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
 
