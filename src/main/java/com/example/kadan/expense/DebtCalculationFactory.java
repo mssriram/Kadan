@@ -1,6 +1,6 @@
 package com.example.kadan.expense;
 
-import com.example.kadan.dto.enums.BalanceStrategy;
+import com.example.kadan.dto.enums.DebtStrategy;
 import com.example.kadan.repository.ExpenseSplitRepository;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Component
 public class DebtCalculationFactory {
 
-    Map<BalanceStrategy, DebtCalculationStrategy> strategies;
+    Map<DebtStrategy, DebtCalculationStrategy> strategies;
     ExpenseSplitRepository expenseSplitRepository;
 
     public DebtCalculationFactory(List<DebtCalculationStrategy> strategies, ExpenseSplitRepository expenseSplitRepository) {
@@ -19,7 +19,7 @@ public class DebtCalculationFactory {
         this.expenseSplitRepository = expenseSplitRepository;
     }
 
-    public DebtCalculationStrategy strategy(BalanceStrategy strategyType) {
+    public DebtCalculationStrategy strategy(DebtStrategy strategyType) {
         return strategies.get(strategyType);
     }
 

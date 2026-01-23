@@ -1,6 +1,6 @@
 package com.example.kadan.dto.enums;
 
-public enum BalanceStrategy {
+public enum DebtStrategy {
     MINFLOW,
     NONEWTRANSFERS
 }

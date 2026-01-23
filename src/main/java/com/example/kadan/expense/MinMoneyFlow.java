@@ -1,6 +1,6 @@
 package com.example.kadan.expense;
 
-import com.example.kadan.dto.enums.BalanceStrategy;
+import com.example.kadan.dto.enums.DebtStrategy;
 import com.example.kadan.repository.ExpenseSplitRepository;
 import org.springframework.stereotype.Component;
 
@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 public class MinMoneyFlow implements DebtCalculationStrategy {
 
     @Override
-    public BalanceStrategy getStrategyType() {
-        return BalanceStrategy.MINFLOW;
+    public DebtStrategy getStrategyType() {
+        return DebtStrategy.MINFLOW;
     }
 
     @Override
