@@ -10,7 +10,8 @@ import com.example.kadan.entity.Expense;
 import com.example.kadan.entity.ExpenseSplit;
 import com.example.kadan.entity.Group;
 import com.example.kadan.entity.User;
-import com.example.kadan.expense.ExpenseCalculationStrategyFactory;
+import com.example.kadan.expense.DebtCalculationFactory;
+import com.example.kadan.expense.ExpenseCalculationFactory;
 import com.example.kadan.repository.ExpenseRepository;
 import com.example.kadan.repository.ExpenseSplitRepository;
 import com.example.kadan.repository.GroupRepository;
@@ -35,7 +36,8 @@ public class ExpenseService {
     private final GroupRepository groupRepository;
     private final ExpenseRepository expenseRepository;
     private final ExpenseSplitRepository expenseSplitRepository;
-    private final ExpenseCalculationStrategyFactory expenseCalcFactory;
+    private final ExpenseCalculationFactory expenseCalcFactory;
+    private final DebtCalculationFactory balanceCalcFactory;
 
     @Transactional
     public List<ExpenseDto> getAllExpenses(User currentUser, UUID groupId) {

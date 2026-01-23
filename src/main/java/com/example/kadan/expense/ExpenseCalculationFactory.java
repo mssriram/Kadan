@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
-public class ExpenseCalculationStrategyFactory {
+public class ExpenseCalculationFactory {
 
     private final Map<SplitType, ExpenseCalculationStrategy> strategies;
 
-    public ExpenseCalculationStrategyFactory(List<ExpenseCalculationStrategy> strategies) {
+    public ExpenseCalculationFactory(List<ExpenseCalculationStrategy> strategies) {
         this.strategies = strategies.stream().collect(Collectors.toMap(ExpenseCalculationStrategy::getSplitType, strategy -> strategy));
     }
 

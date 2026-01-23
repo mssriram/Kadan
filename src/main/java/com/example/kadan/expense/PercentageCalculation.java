@@ -6,12 +6,14 @@ import com.example.kadan.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class PercentageCalculation implements ExpenseCalculationStrategy {
+
+    public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    public static final BigDecimal HUNDRED_THOUSAND = BigDecimal.valueOf(100000);
 
     @Override
     public SplitType getSplitType() {
@@ -22,9 +24,8 @@ public class PercentageCalculation implements ExpenseCalculationStrategy {
     public Map<User, BigDecimal> calculateExpense(Expense amount, Map<User, BigDecimal> memberSplitDto) {
         Map<User, BigDecimal> result = new HashMap<>();
         for (User user : memberSplitDto.keySet()) {
-            BigDecimal percentage = memberSplitDto.get(user);
-            //calculate actual value from percentage
-            BigDecimal actualAmount = amount.getAmount().multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
+            BigDecimal percentage = memberSplitDto.get(user).multiply(HUNDRED);
+            BigDecimal actualAmount = amount.getAmount().multiply(percentage).divide(HUNDRED_THOUSAND);
 
             result.put(user, actualAmount);
         }
