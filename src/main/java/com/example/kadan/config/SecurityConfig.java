@@ -22,7 +22,7 @@ public class SecurityConfig {
     private final AuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/error").permitAll()
