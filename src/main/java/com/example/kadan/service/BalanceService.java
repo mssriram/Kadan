@@ -2,13 +2,17 @@ package com.example.kadan.service;
 
 import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.MemberBalanceDto;
+import com.example.kadan.dto.SettlementDto;
+import com.example.kadan.dto.SettlementResponseDto;
 import com.example.kadan.dto.enums.DebtStrategy;
 import com.example.kadan.entity.Group;
+import com.example.kadan.entity.Settlement;
 import com.example.kadan.entity.User;
 import com.example.kadan.expense.Debt;
 import com.example.kadan.expense.DebtCalculationFactory;
 import com.example.kadan.repository.ExpenseSplitRepository;
 import com.example.kadan.repository.GroupRepository;
+import com.example.kadan.repository.SettlementRepository;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,7 @@ public class BalanceService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final ExpenseSplitRepository expenseSplitRepository;
+    private final SettlementRepository settlementRepository;
     private final DebtCalculationFactory debtCalcFactory;
 
     public BalanceResponseDto getBalances(User user, UUID groupId) {
@@ -44,5 +49,24 @@ public class BalanceService {
         List<MemberBalanceDto> memberBalances = MemberBalanceDto.from(members, memberIds);
 
         return new BalanceResponseDto(memberBalances, debts);
+    }
+
+    public SettlementResponseDto recordSettlement(User debtor, UUID groupId, SettlementDto settlementDto) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        if (!group.hasMember(debtor.getId()) || !group.hasMember(settlementDto.creditor_id())) {
+            throw new EntityNotFoundException("User is not a member of the group");
+        }
+        User creditor = group.getMembers().stream().filter(user -> user.getId().equals(settlementDto.creditor_id())).findFirst().get();
+        Settlement settlement = Settlement.builder()
+                .creditor(creditor)
+                .debtor(debtor)
+                .amount(settlementDto.amount())
+                .currency(settlementDto.currency())
+                .group(group)
+                .build();
+
+        Settlement saved = settlementRepository.save(settlement);
+
+        return SettlementResponseDto.fromEntity(saved);
     }
 }
