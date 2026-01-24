@@ -22,21 +22,23 @@ public class UserService {
 //    }
 
     @Transactional
-    public UserProfileDto updateUserProfile(User currentUser, UpdateUserProfileDto updateDto) {
+    public UserProfileDto updateUserProfile(UUID currentUser, UpdateUserProfileDto updateDto) {
+        User user = userRepository.findById(currentUser).orElseThrow(() -> new EntityNotFoundException("User not found"));
         if (updateDto.email() != null) {
-            currentUser.setEmail(updateDto.email());
+            user.setEmail(updateDto.email());
         }
         if (updateDto.displayName() != null) {
-            currentUser.setDisplayName(updateDto.displayName());
+            user.setDisplayName(updateDto.displayName());
         }
         if (updateDto.defaultCurrency() != null) {
-            currentUser.setDefaultCurrency(updateDto.defaultCurrency());
+            user.setDefaultCurrency(updateDto.defaultCurrency());
         }
 
-        User updatedUser = userRepository.save(currentUser);
+        User updatedUser = userRepository.save(user);
         return UserProfileDto.fromEntity(updatedUser);
     }
 
+    @Transactional
     public UserProfileDto getUserById(UUID userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
         return UserProfileDto.fromEntity(user);

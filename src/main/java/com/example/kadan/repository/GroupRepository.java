@@ -17,7 +17,7 @@ public interface GroupRepository extends CrudRepository<Group, UUID> {
 
     Optional<Group> findByIdAndStatusNot(UUID id, GroupStatus status);
 
-    List<Group> findAllByMembersAndStatusNot(User currentUser, GroupStatus status);
+    List<Group> findByMembers_IdAndStatusNot(UUID userId, GroupStatus status);
 
     @Query("SELECT u FROM Group g JOIN g.members u WHERE g.id = :groupId AND u.id = :userId AND g.status = :status")
     Optional<User> findMemberByGroupIdAndUserId(@Param("groupId") UUID groupId,

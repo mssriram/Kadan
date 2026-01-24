@@ -16,6 +16,7 @@ import com.example.kadan.repository.SettlementRepository;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,9 +34,9 @@ public class BalanceService {
     private final SettlementRepository settlementRepository;
     private final DebtCalculationFactory debtCalcFactory;
 
-    public BalanceResponseDto getBalances(User user, UUID groupId) {
+    public BalanceResponseDto getBalances(UUID currentUser, UUID groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(user.getId())) {
+        if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("User is not a member of the group");
         }
 
@@ -51,12 +52,17 @@ public class BalanceService {
         return new BalanceResponseDto(memberBalances, debts);
     }
 
-    public SettlementResponseDto recordSettlement(User debtor, UUID groupId, SettlementDto settlementDto) {
+    public SettlementResponseDto recordSettlement(UUID debtorId, UUID groupId, SettlementDto settlementDto) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
-        if (!group.hasMember(debtor.getId()) || !group.hasMember(settlementDto.creditor_id())) {
+        if (!group.hasMember(debtorId) || !group.hasMember(settlementDto.creditor_id())) {
             throw new EntityNotFoundException("User is not a member of the group");
         }
         User creditor = group.getMembers().stream().filter(user -> user.getId().equals(settlementDto.creditor_id())).findFirst().get();
+        User debtor = group.getMembers().stream().filter(user -> user.getId().equals(debtorId)).findFirst().get();
+
+        if (creditor.getId().equals(debtor.getId())) {
+            throw new DataIntegrityViolationException("Creditor and debtor cannot be the same user");
+        }
         Settlement settlement = Settlement.builder()
                 .creditor(creditor)
                 .debtor(debtor)

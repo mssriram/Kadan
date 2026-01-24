@@ -1,9 +1,9 @@
 package com.example.kadan.controller;
 
+import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.SettlementDto;
 import com.example.kadan.dto.SettlementResponseDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.BalanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,14 +25,14 @@ public class BalanceController {
     private final BalanceService balanceService;
 
     @GetMapping("/balances")
-    public ResponseEntity<BalanceResponseDto> getBalances(@AuthenticationPrincipal User user, @PathVariable UUID groupId) {
-        BalanceResponseDto response = balanceService.getBalances(user, groupId);
+    public ResponseEntity<BalanceResponseDto> getBalances(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId) {
+        BalanceResponseDto response = balanceService.getBalances(principal.id(), groupId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/settlement")
-    public ResponseEntity<SettlementResponseDto> recordSettlement(@AuthenticationPrincipal User user, @PathVariable UUID groupId, @RequestBody SettlementDto settlementDto) {
-        SettlementResponseDto response = balanceService.recordSettlement(user, groupId, settlementDto);
+    public ResponseEntity<SettlementResponseDto> recordSettlement(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @RequestBody SettlementDto settlementDto) {
+        SettlementResponseDto response = balanceService.recordSettlement(principal.id(), groupId, settlementDto);
         return ResponseEntity.ok(response);
     }
 }

@@ -1,9 +1,9 @@
 package com.example.kadan.controller;
 
+import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.CreateExpenseDto;
 import com.example.kadan.dto.ExpenseDto;
 import com.example.kadan.dto.UpdateExpenseDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.ExpenseService;
 import com.example.kadan.validator.ExpenseValidator;
 import jakarta.validation.Valid;
@@ -30,34 +30,34 @@ public class ExpenseController {
     private final ExpenseService expenseService;
 
     @GetMapping
-    public ResponseEntity<List<ExpenseDto>> getAllExpenses(@AuthenticationPrincipal User user, @PathVariable UUID groupId) {
-        List<ExpenseDto> expenses = expenseService.getAllExpenses(user, groupId);
+    public ResponseEntity<List<ExpenseDto>> getAllExpenses(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId) {
+        List<ExpenseDto> expenses = expenseService.getAllExpenses(principal.id(), groupId);
         return ResponseEntity.ok(expenses);
     }
 
     @GetMapping("/{expenseId}")
-    public ResponseEntity<ExpenseDto> getExpenseById(@AuthenticationPrincipal User user, @PathVariable UUID groupId, @PathVariable UUID expenseId) {
-        ExpenseDto expense = expenseService.getExpenseById(user, groupId, expenseId);
+    public ResponseEntity<ExpenseDto> getExpenseById(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId) {
+        ExpenseDto expense = expenseService.getExpenseById(principal.id(), groupId, expenseId);
         return ResponseEntity.ok(expense);
     }
 
     @PostMapping
-    public ResponseEntity<Void> createExpense(@AuthenticationPrincipal User user, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
+    public ResponseEntity<Void> createExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
         ExpenseValidator.validateCreateExpense(request);
-        expenseService.createExpense(user, groupId, request);
+        expenseService.createExpense(principal.id(), groupId, request);
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{expenseId}")
-    public ResponseEntity<Void> updateExpense(@AuthenticationPrincipal User user, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
+    public ResponseEntity<Void> updateExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
         ExpenseValidator.validateUpdateExpense(request);
-        expenseService.updateExpense(user, groupId, expenseId, request);
+        expenseService.updateExpense(principal.id(), groupId, expenseId, request);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{expenseId}")
-    public ResponseEntity<Void> deleteExpense(@AuthenticationPrincipal User user, @PathVariable UUID groupId, @PathVariable UUID expenseId) {
-        expenseService.deleteExpense(user, groupId, expenseId);
+    public ResponseEntity<Void> deleteExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId) {
+        expenseService.deleteExpense(principal.id(), groupId, expenseId);
         return ResponseEntity.ok().build();
     }
 }
