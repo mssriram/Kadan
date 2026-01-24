@@ -31,7 +31,6 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    //TODO update to use jwtauthprincipal
     @GetMapping
     public ResponseEntity<List<GroupResponseDto>> getGroups(@AuthenticationPrincipal JwtUserPrincipal principal) {
         List<GroupResponseDto> response = groupService.getGroups(principal.id());
@@ -52,12 +51,10 @@ public class GroupController {
 
     @PutMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<GroupResponseDto> addMemberToGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID memberId) {
-        GroupResponseDto response = groupService.addMemberToGroup(principal.id(), groupId, memberId);
-        return ResponseEntity.ok(response);
+        groupService.addMemberToGroup(principal.id(), groupId, memberId);
+        return ResponseEntity.ok().build();
     }
 
-    //TODO figure out to fix adding members to group, i.e if one or more members doesnt exist.
-    //TODO probably shouldnt return created group with members. might be a security issue.
     @PostMapping
     public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody GroupDto groupDto) {
         CreateGroupResponseDto response = groupService.createGroup(principal.id(), groupDto);

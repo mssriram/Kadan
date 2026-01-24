@@ -1,10 +1,12 @@
 package com.example.kadan.dto;
 
 import com.example.kadan.entity.Group;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.List;
 import java.util.UUID;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GroupResponseDto(
         UUID id,
         String name,

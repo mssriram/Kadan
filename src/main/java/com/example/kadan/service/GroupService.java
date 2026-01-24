@@ -1,5 +1,6 @@
 package com.example.kadan.service;
 
+import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.CreateGroupResponseDto;
 import com.example.kadan.dto.GroupDto;
 import com.example.kadan.dto.GroupResponseDto;
@@ -30,11 +31,11 @@ import java.util.stream.StreamSupport;
 @RequiredArgsConstructor
 public class GroupService {
 
+    private final BalanceService balanceService;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
 
-    //TODO members is returned as null. should exclude from response body.
     @Transactional
     public List<GroupResponseDto> getGroups(UUID currentUser) {
         List<Group> groups = groupRepository.findByMembers_IdAndStatusNot(currentUser, GroupStatus.DELETED);
@@ -70,27 +71,27 @@ public class GroupService {
         return GroupResponseDto.fromEntity(updatedGroup);
     }
 
-    //TODO update to check if memberId already part of group. can throw 409 conflict
-    //TODO returning stale data, need to fetch updated group with members
+    //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
     @Transactional
-    public GroupResponseDto addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
+    public void addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
         }
 
-        User newMember = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        try {
-            GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
-            groupMemberRepository.save(groupMember);
-        } catch (DataIntegrityViolationException e) {
+        //Return success if member already part of group
+        if (group.hasMember(memberId)) {
             log.info("User {} is already a member of group {}", memberId, groupId);
+            return;
         }
 
-        return GroupResponseDto.fromEntity(group);
+        User newMember = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
+        groupMemberRepository.save(groupMember);
     }
 
+    //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
     @Transactional
     public CreateGroupResponseDto createGroup(UUID currentUser, GroupDto groupDto) {
         User groupCreatorUser = userRepository.findById(currentUser).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -110,17 +111,14 @@ public class GroupService {
                         new GroupMember(savedGroup, user, UserRole.OWNER) :
                         new GroupMember(savedGroup, user, UserRole.MEMBER))
                 .toList();
-        Iterable<GroupMember> savedMembers = groupMemberRepository.saveAll(groupMembers);
-        List<User> savedUsers = StreamSupport.stream(savedMembers.spliterator(), false).map(GroupMember::getUser).collect(Collectors.toList());
 
         boolean creatorInList = members.stream().anyMatch(user -> user.getId().equals(currentUser));
         if (!creatorInList) {
             GroupMember creatorMember = new GroupMember(savedGroup, groupCreatorUser, UserRole.OWNER);
             groupMemberRepository.save(creatorMember);
-            savedUsers.add(creatorMember.getUser());
         }
 
-        return CreateGroupResponseDto.fromEntity(savedGroup, savedUsers);
+        return CreateGroupResponseDto.fromEntity(savedGroup);
     }
 
     @Transactional
@@ -136,10 +134,14 @@ public class GroupService {
 
     @Transactional
     public void deleteGroup(UUID currentUser, UUID groupId) {
-        //TODO delete group not allwoed when balances are non zero.
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
+        }
+
+        BalanceResponseDto groupBalances = balanceService.getBalances(currentUser, groupId);
+        if (!groupBalances.balances().isEmpty()) {
+            throw new DataIntegrityViolationException("Cannot delete group with non-zero balances");
         }
 
         groupRepository.delete(group);

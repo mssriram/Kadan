@@ -25,10 +25,10 @@ public class UserController {
 
     private final UserService userService;
 
-    //TODO update to jwtuserprincipal
     @GetMapping("/me")
-    public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal User principal) {
-        return ResponseEntity.ok(UserProfileDto.fromEntity(principal));
+    public ResponseEntity<UserProfileDto> getCurrentUserProfile(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        UserProfileDto response = userService.getUserById(principal.id());
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/me")

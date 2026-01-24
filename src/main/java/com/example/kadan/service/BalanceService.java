@@ -16,6 +16,7 @@ import com.example.kadan.repository.SettlementRepository;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -51,7 +52,6 @@ public class BalanceService {
         return new BalanceResponseDto(memberBalances, debts);
     }
 
-    //TODO cleanly handle exception for creditor debtor being same.
     public SettlementResponseDto recordSettlement(UUID debtorId, UUID groupId, SettlementDto settlementDto) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(debtorId) || !group.hasMember(settlementDto.creditor_id())) {
@@ -59,6 +59,10 @@ public class BalanceService {
         }
         User creditor = group.getMembers().stream().filter(user -> user.getId().equals(settlementDto.creditor_id())).findFirst().get();
         User debtor = group.getMembers().stream().filter(user -> user.getId().equals(debtorId)).findFirst().get();
+
+        if (creditor.getId().equals(debtor.getId())) {
+            throw new DataIntegrityViolationException("Creditor and debtor cannot be the same user");
+        }
         Settlement settlement = Settlement.builder()
                 .creditor(creditor)
                 .debtor(debtor)
