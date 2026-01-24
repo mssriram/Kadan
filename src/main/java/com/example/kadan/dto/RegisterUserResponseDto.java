@@ -4,7 +4,6 @@ import com.example.kadan.dto.enums.UserStatus;
 
 public record RegisterUserResponseDto(
         String id,
-        String username,
         String email,
         String displayName,
         String defaultCurrency,

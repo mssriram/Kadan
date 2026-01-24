@@ -3,7 +3,6 @@ package com.example.kadan.controller;
 import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.UpdateUserProfileDto;
 import com.example.kadan.dto.UserProfileDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

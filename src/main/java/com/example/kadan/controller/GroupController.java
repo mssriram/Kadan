@@ -5,7 +5,6 @@ import com.example.kadan.dto.CreateGroupResponseDto;
 import com.example.kadan.dto.GroupDto;
 import com.example.kadan.dto.GroupResponseDto;
 import com.example.kadan.dto.UpdateGroupDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

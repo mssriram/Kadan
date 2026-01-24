@@ -4,7 +4,6 @@ import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.CreateExpenseDto;
 import com.example.kadan.dto.ExpenseDto;
 import com.example.kadan.dto.UpdateExpenseDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.ExpenseService;
 import com.example.kadan.validator.ExpenseValidator;
 import jakarta.validation.Valid;

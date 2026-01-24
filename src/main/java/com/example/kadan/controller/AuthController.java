@@ -29,7 +29,6 @@ public class AuthController {
         User newUser = authService.registerUser(userDto);
         RegisterUserResponseDto response = new RegisterUserResponseDto(
                 newUser.getId().toString(),
-                newUser.getUsername(),
                 newUser.getEmail(),
                 newUser.getDisplayName(),
                 newUser.getDefaultCurrency(),

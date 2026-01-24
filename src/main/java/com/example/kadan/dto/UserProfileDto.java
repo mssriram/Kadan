@@ -5,7 +5,6 @@ import com.example.kadan.entity.User;
 
 public record UserProfileDto(
         String id,
-        String username,
         String email,
         String displayName,
         String defaultCurrency,
@@ -14,7 +13,6 @@ public record UserProfileDto(
     public static UserProfileDto fromEntity(User user) {
         return new UserProfileDto(
                 user.getId().toString(),
-                user.getUsername(),
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getDefaultCurrency(),

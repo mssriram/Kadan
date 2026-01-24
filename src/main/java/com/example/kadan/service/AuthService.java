@@ -5,8 +5,6 @@ import com.example.kadan.dto.RegisterUserDto;
 import com.example.kadan.dto.enums.UserStatus;
 import com.example.kadan.entity.User;
 import com.example.kadan.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,23 +23,22 @@ public class AuthService {
 
     @Transactional
     public User registerUser(RegisterUserDto userDto) {
-        if (userRepository.findByUsername(userDto.username()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists");
-        }
         if (userRepository.findByEmail(userDto.email()).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
 
         User user = new User();
-        user.setUsername(userDto.username().trim());
         user.setEmail(userDto.email().trim());
-        user.setPasswordHash(passwordEncoder.encode(userDto.password()));
+        user.setPasswordHash(passwordEncoder.encode(userDto.password().trim()));
+        user.setDisplayName(userDto.displayName());
+        user.setDefaultCurrency("INR");
         user.setStatus(UserStatus.ACTIVE);
 
         return userRepository.save(user);
     }
 
-    public User authenticateUser(@Valid LoginUserDto loginUserDto) {
+    @Transactional
+    public User authenticateUser(LoginUserDto loginUserDto) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginUserDto.email(), loginUserDto.password()));
 
         return (User) authentication.getPrincipal();

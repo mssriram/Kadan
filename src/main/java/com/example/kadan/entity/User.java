@@ -38,7 +38,6 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id;
-    private String username;
     private String email;
 
     @JsonIgnore

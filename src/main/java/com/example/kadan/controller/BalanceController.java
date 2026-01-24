@@ -4,7 +4,6 @@ import com.example.kadan.config.JwtUserPrincipal;
 import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.SettlementDto;
 import com.example.kadan.dto.SettlementResponseDto;
-import com.example.kadan.entity.User;
 import com.example.kadan.service.BalanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
