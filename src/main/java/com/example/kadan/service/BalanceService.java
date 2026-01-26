@@ -40,7 +40,11 @@ public class BalanceService {
             throw new EntityNotFoundException("User is not a member of the group");
         }
 
-        List<ExpenseSplitRepository.GroupBalance> balances = expenseSplitRepository.findGroupBalances(groupId);
+        return getBalances(group);
+    }
+
+    public BalanceResponseDto getBalances(Group group) {
+        List<ExpenseSplitRepository.GroupBalance> balances = expenseSplitRepository.findGroupBalances(group.getId());
         DebtStrategy debtStrategy = group.isSimplifyDebts() ? DebtStrategy.NONEWTRANSFERS : DebtStrategy.MINFLOW;
         List<Debt> debts = debtCalcFactory.strategy(debtStrategy).calculateDebts(balances);
 

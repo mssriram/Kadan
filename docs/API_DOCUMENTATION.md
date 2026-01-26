@@ -4,12 +4,12 @@
 
 ### 1.1 Base URL
 ```
-Production: https://api.kadan.com/api/v1
-Development: http://localhost:8080/api/v1
+Production: https://api.kadan.com/api
+Development: http://localhost:8080/api
 ```
 
 ### 1.2 Authentication
-All API requests (except public endpoints) require a valid JWT token in the Authorization header:
+All API requests (except public endpoints under `/api/public/**`) require a valid JWT token in the Authorization header:
 ```
 Authorization: Bearer <access_token>
 ```
@@ -20,42 +20,17 @@ Content-Type: application/json
 Accept: application/json
 ```
 
-### 1.4 API Versioning
-API version is included in the URL path (`/api/v1/`). Major version changes indicate breaking changes.
-
-### 1.5 Common Response Codes
+### 1.4 Common Response Codes
 | Code | Description           |
 |------|-----------------------|
 | 200  | Success               |
 | 201  | Created               |
-| 204  | No Content            |
 | 400  | Bad Request           |
 | 401  | Unauthorized          |
 | 403  | Forbidden             |
 | 404  | Not Found             |
 | 409  | Conflict              |
-| 422  | Unprocessable Entity  |
-| 429  | Too Many Requests     |
 | 500  | Internal Server Error |
-
-### 1.6 Pagination
-List endpoints support pagination:
-```
-GET /api/v1/expenses?page=0&size=20&sort=createdAt,desc
-```
-
-Response includes pagination metadata:
-```json
-{
-  "content": ["..."],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 150,
-    "totalPages": 8
-  }
-}
-```
 
 ---
 
@@ -64,44 +39,59 @@ Response includes pagination metadata:
 ### 2.1 Register User
 Create a new user account.
 
-**Endpoint:** `POST /auth/register`
+**Endpoint:** `POST /api/public/register`
 
-**Authentication:** None
+**Authentication:** None (Public endpoint)
 
 **Request Body:**
 ```json
 {
-  "username": "john_doe",
   "email": "john@example.com",
-  "password": "SecurePass123!",
-  "displayName": "John Doe"
+  "displayName": "John Doe",
+  "password": "SecurePass123!"
 }
 ```
+
+**Field Validations:**
+
+| Field       | Type   | Required | Validation                   |
+|-------------|--------|----------|------------------------------|
+| email       | string | Yes      | Must be a valid email format |
+| displayName | string | Yes      | Maximum 100 characters       |
+| password    | string | Yes      | Minimum 8 characters         |
 
 **Response:** `201 Created`
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe",
   "email": "john@example.com",
   "displayName": "John Doe",
-  "status": "PENDING_VERIFICATION",
-  "createdAt": "2026-01-14T10:30:00Z"
+  "defaultCurrency": "INR",
+  "status": "ACTIVE"
 }
 ```
 
+**Response Fields:**
+
+| Field           | Type          | Description                             |
+|-----------------|---------------|-----------------------------------------|
+| id              | string (UUID) | Unique user identifier                  |
+| email           | string        | User's email address                    |
+| displayName     | string        | User's display name                     |
+| defaultCurrency | string        | User's default currency (3-letter code) |
+| status          | enum          | User status: `ACTIVE`, `INACTIVE`       |
+
 **Error Responses:**
-- `400` - Validation error (invalid email, weak password)
-- `409` - Username or email already exists
+- `400` - Validation error (invalid email, password too short)
 
 ---
 
 ### 2.2 Login
-Authenticate user and obtain tokens.
+Authenticate user and obtain JWT token.
 
-**Endpoint:** `POST /auth/login`
+**Endpoint:** `POST /api/public/login`
 
-**Authentication:** None
+**Authentication:** None (Public endpoint)
 
 **Request Body:**
 ```json
@@ -111,151 +101,22 @@ Authenticate user and obtain tokens.
 }
 ```
 
+**Field Validations:**
+
+| Field    | Type   | Required | Validation      |
+|----------|--------|----------|-----------------|
+| email    | string | Yes      | Cannot be blank |
+| password | string | Yes      | Cannot be blank |
+
 **Response:** `200 OK`
-```json
-{
-  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...",
-  "tokenType": "Bearer",
-  "expiresIn": 3600,
-  "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "email": "john@example.com",
-    "displayName": "John Doe"
-  }
-}
+
+The response body is empty. The JWT token is returned in the `Authorization` response header:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Error Responses:**
 - `401` - Invalid credentials
-- `403` - Account not verified or suspended
-
----
-
-### 2.3 Refresh Token
-Obtain new access token using refresh token.
-
-**Endpoint:** `POST /auth/refresh`
-
-**Authentication:** None
-
-**Request Body:**
-```json
-{
-  "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "bmV3IHJlZnJlc2ggdG9rZW4...",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
-}
-```
-
-**Error Responses:**
-- `401` - Invalid or expired refresh token
-
----
-
-### 2.4 Logout
-Invalidate current session tokens.
-
-**Endpoint:** `POST /auth/logout`
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
-}
-```
-
-**Response:** `204 No Content`
-
----
-
-### 2.5 Request Password Reset
-Initiate password reset flow.
-
-**Endpoint:** `POST /auth/password/reset-request`
-
-**Authentication:** None
-
-**Request Body:**
-```json
-{
-  "email": "john@example.com"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Password reset email sent if account exists"
-}
-```
-
----
-
-### 2.6 Reset Password
-Complete password reset with token.
-
-**Endpoint:** `POST /auth/password/reset`
-
-**Authentication:** None
-
-**Request Body:**
-```json
-{
-  "token": "reset_token_from_email",
-  "newPassword": "NewSecurePass456!"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Password reset successful"
-}
-```
-
-**Error Responses:**
-- `400` - Invalid or expired token
-- `422` - Password does not meet requirements
-
----
-
-### 2.7 Change Password
-Change password for authenticated user.
-
-**Endpoint:** `POST /auth/password/change`
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "currentPassword": "SecurePass123!",
-  "newPassword": "NewSecurePass456!"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Password changed successfully"
-}
-```
-
-**Error Responses:**
-- `400` - Current password incorrect
-- `422` - New password does not meet requirements
 
 ---
 
@@ -264,7 +125,7 @@ Change password for authenticated user.
 ### 3.1 Get Current User Profile
 Retrieve authenticated user's profile.
 
-**Endpoint:** `GET /users/me`
+**Endpoint:** `GET /api/users/me`
 
 **Authentication:** Required
 
@@ -272,144 +133,84 @@ Retrieve authenticated user's profile.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe",
   "email": "john@example.com",
   "displayName": "John Doe",
   "defaultCurrency": "INR",
-  "status": "ACTIVE",
-  "createdAt": "2026-01-01T00:00:00Z",
-  "updatedAt": "2026-01-14T10:30:00Z"
+  "status": "ACTIVE"
 }
 ```
+
+**Response Fields:**
+
+| Field           | Type          | Description                             |
+|-----------------|---------------|-----------------------------------------|
+| id              | string (UUID) | Unique user identifier                  |
+| email           | string        | User's email address                    |
+| displayName     | string        | User's display name                     |
+| defaultCurrency | string        | User's default currency (3-letter code) |
+| status          | enum          | User status: `ACTIVE`, `INACTIVE`       |
 
 ---
 
 ### 3.2 Update Current User Profile
 Update authenticated user's profile.
 
-**Endpoint:** `PATCH /users/me`
+**Endpoint:** `PUT /api/users/me`
 
 **Authentication:** Required
 
 **Request Body:**
 ```json
 {
+  "email": "john.updated@example.com",
   "displayName": "John D.",
-  "email": "john@mail.com",
   "defaultCurrency": "USD"
 }
 ```
 
+**Field Validations:**
+
+| Field           | Type   | Required | Validation                               |
+|-----------------|--------|----------|------------------------------------------|
+| email           | string | No       | Must be a valid email format             |
+| displayName     | string | No       | Maximum 100 characters                   |
+| defaultCurrency | string | No       | Exactly 3 characters (ISO currency code) |
+
+**Note:** All fields are optional. Only provided fields will be updated.
+
 **Response:** `200 OK`
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe",
-  "email": "john@example.com",
+  "email": "john.updated@example.com",
   "displayName": "John D.",
   "defaultCurrency": "USD",
-  "updatedAt": "2026-01-14T10:35:00Z"
+  "status": "ACTIVE"
 }
 ```
 
 ---
 
-### 3.3 Search Users
-Search users by username or email (for adding to groups).
+### 3.3 Get User by ID
+Retrieve user details by ID.
 
-**Endpoint:** `GET /users/search`
-
-**Authentication:** Required
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |  
-|-----------|------|----------|-------------|  
-| q | string | Yes | Search query (min 3 chars) |  
-| limit | int | No | Max results (default: 10, max: 50) |  
-
-**Example:** `GET /users/search?q=john&limit=10`
-
-**Response:** `200 OK`
-```json
-{
-  "results": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "username": "john_doe",
-      "displayName": "John Doe",
-      "avatarUrl": "https://cdn.kadan.com/avatars/john.jpg"
-    },
-    {
-      "id": "660e8400-e29b-41d4-a716-446655440001",
-      "username": "johnny123",
-      "displayName": "Johnny Smith",
-      "avatarUrl": null
-    }
-  ]
-}
-```
-
----
-
-### 3.4 Get User by ID
-Retrieve user details by ID (limited info for non-contacts).
-
-**Endpoint:** `GET /users/{userId}`
+**Endpoint:** `GET /api/users/{userId}`
 
 **Authentication:** Required
-
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| userId | UUID | User identifier |
 
 **Response:** `200 OK`
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe",
-  "displayName": "John Doe"
+  "email": "john@example.com",
+  "displayName": "John Doe",
+  "defaultCurrency": "INR",
+  "status": "ACTIVE"
 }
 ```
 
----
-
-### 3.5 Get User's Overall Balance
-Get aggregated balance across all groups.
-
-**Endpoint:** `GET /users/me/balance`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-```json
-{
-  "totalOwed": 1500.00,
-  "totalOwing": 750.50,
-  "netBalance": 749.50,
-  "currency": "INR",
-  "balancesByUser": [
-    {
-      "user": {
-        "id": "660e8400-e29b-41d4-a716-446655440001",
-        "username": "jane_doe",
-        "displayName": "Jane Doe"
-      },
-      "amount": 500.00,
-      "direction": "OWED_TO_YOU"
-    },
-    {
-      "user": {
-        "id": "770e8400-e29b-41d4-a716-446655440002",
-        "username": "bob_smith",
-        "displayName": "Bob Smith"
-      },
-      "amount": 250.50,
-      "direction": "YOU_OWE"
-    }
-  ]
-}
-```
+**Error Responses:**
+- `404` - User not found
 
 ---
 
@@ -418,7 +219,7 @@ Get aggregated balance across all groups.
 ### 4.1 Create Group
 Create a new expense group.
 
-**Endpoint:** `POST /groups`
+**Endpoint:** `POST /api/groups`
 
 **Authentication:** Required
 
@@ -429,29 +230,51 @@ Create a new expense group.
   "description": "Beach vacation expenses",
   "currency": "INR",
   "simplifyDebts": true,
-  "memberIds": [
-    "660e8400-e29b-41d4-a716-446655440001",
-    "770e8400-e29b-41d4-a716-446655440002"
+  "members": [
+    "sriram@mail.com",
+    "vishal@mail.com"
   ]
 }
 ```
 
+**Field Validations:**
+
+| Field         | Type             | Required | Validation                          |
+|---------------|------------------|----------|-------------------------------------|
+| name          | string           | Yes      | Cannot be blank, max 100 characters |
+| description   | string           | No       | Optional description                |
+| currency      | string           | No       | 3-letter ISO currency code          |
+| simplifyDebts | boolean          | Yes      | Cannot be null                      |
+| members       | array of strings | No       | List of emails to add as members    |
+
 **Response:** `201 Created`
 ```json
 {
-  "id": "880e8400-e29b-41d4-a716-446655440003",
+  "groupId": "880e8400-e29b-41d4-a716-446655440003",
   "name": "Trip to Goa",
   "description": "Beach vacation expenses",
   "currency": "INR",
   "simplifyDebts": true,
-  "status": "ACTIVE",
   "createdBy": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe"
-  },
-  "createdAt": "2026-01-14T10:30:00Z"
+    "email": "john@example.com",
+    "displayName": "John Doe",
+    "defaultCurrency": "INR",
+    "status": "ACTIVE"
+  }
 }
 ```
+
+**Response Fields:**
+
+| Field         | Type    | Description                                |
+|---------------|---------|--------------------------------------------|
+| groupId       | UUID    | Unique group identifier                    |
+| name          | string  | Group name                                 |
+| description   | string  | Group description                          |
+| currency      | string  | Group's default currency                   |
+| simplifyDebts | boolean | Whether to simplify debts within the group |
+| createdBy     | object  | User profile of the group creator          |
 
 **Error Responses:**
 - `400` - Validation error
@@ -462,83 +285,91 @@ Create a new expense group.
 ### 4.2 Get All Groups
 Retrieve all groups for authenticated user.
 
-**Endpoint:** `GET /groups`
+**Endpoint:** `GET /api/groups`
 
 **Authentication:** Required
 
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| status | string | No | Filter by status (ACTIVE, ARCHIVED) |
-| page | int | No | Page number (default: 0) |
-| size | int | No | Page size (default: 20) |
-| sort | string | No | Sort field (default: updatedAt,desc) |
-
-**Example:** `GET /groups?status=ACTIVE&page=0&size=10`
-
 **Response:** `200 OK`
 ```json
-{
-  "content": [
-    {
-      "id": "880e8400-e29b-41d4-a716-446655440003",
-      "name": "Trip to Goa",
-      "description": "Beach vacation expenses",
-      "currency": "INR",
-      "imageUrl": null,
-      "status": "ACTIVE",
-      "memberCount": 3,
-      "totalExpenses": 15000.00,
-      "userBalance": 2500.00,
-      "updatedAt": "2026-01-14T10:30:00Z"
-    }
-  ],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 5,
-    "totalPages": 1
-  }
-}
-```
-
----
-
-### 4.3 Get Group by ID
-Retrieve group details.
-
-**Endpoint:** `GET /groups/{groupId}`
-
-**Authentication:** Required
-
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| groupId | UUID | Group identifier |
-
-**Response:** `200 OK`
-```json
-{
+[
+  {
     "id": "880e8400-e29b-41d4-a716-446655440003",
     "name": "Trip to Goa",
     "description": "Beach vacation expenses",
     "currency": "INR",
-    "simplifyDebts": true,
-    "status": "ACTIVE",
-    "createdBy": {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "username": "john_doe",
-        "displayName": "John Doe"
+    "created_by": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com",
+      "displayName": "John Doe",
+      "defaultCurrency": "INR",
+      "status": "ACTIVE"
     },
-    "createdAt": "2026-01-14T10:30:00Z",
-    "updatedAt": "2026-01-14T10:30:00Z",
-    "totalExpenses": 15000.00,
-    "memberCount": 3
+    "members": []
+  }
+]
+```
+
+**Error Responses:**
+- `404` - User is not a member of this group
+- `404` - Group not found
+
+---
+
+**Response Fields (per group):**
+
+| Field       | Type   | Description                                |
+|-------------|--------|--------------------------------------------|
+| id          | UUID   | Group identifier                           |
+| name        | string | Group name                                 |
+| description | string | Group description                          |
+| currency    | string | Group's default currency                   |
+| created_by  | object | User profile of the group creator          |
+| members     | array  | List of group members (empty in list view) |
+
+---
+
+### 4.3 Get Group by ID
+Retrieve group details including all members.
+
+**Endpoint:** `GET /api/groups/{groupId}`
+
+**Authentication:** Required
+
+**Response:** `200 OK`
+```json
+{
+  "id": "880e8400-e29b-41d4-a716-446655440003",
+  "name": "Trip to Goa",
+  "description": "Beach vacation expenses",
+  "currency": "INR",
+  "created_by": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "john@example.com",
+    "displayName": "John Doe",
+    "defaultCurrency": "INR",
+    "status": "ACTIVE"
+  },
+  "members": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com",
+      "displayName": "John Doe",
+      "defaultCurrency": "INR",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "email": "jane@example.com",
+      "displayName": "Jane Doe",
+      "defaultCurrency": "INR",
+      "status": "ACTIVE"
+    }
+  ]
 }
 ```
 
 **Error Responses:**
-- `403` - User is not a member of this group
+- `404` - User is not a member of this group
 - `404` - Group not found
 
 ---
@@ -546,23 +377,30 @@ Retrieve group details.
 ### 4.4 Update Group
 Update group details.
 
-**Endpoint:** `PATCH /groups/{groupId}`
+**Endpoint:** `PUT /api/groups/{groupId}`
 
-**Authentication:** Required (OWNER or ADMIN)
-
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| groupId | UUID | Group identifier |
+**Authentication:** Required
 
 **Request Body:**
 ```json
 {
   "name": "Goa Trip 2026",
   "description": "Beach vacation with friends",
-  "simplifyDebts": false
+  "simplifyDebts": false,
+  "currency": "USD"
 }
 ```
+
+**Field Validations:**
+
+| Field         | Type    | Required | Validation                            |
+|---------------|---------|----------|---------------------------------------|
+| name          | string  | No       | Optional new group name               |
+| description   | string  | No       | Optional new description              |
+| simplifyDebts | boolean | No       | Optional flag for debt simplification |
+| currency      | string  | No       | 3-letter ISO currency code            |
+
+**Note:** All fields are optional. Only provided fields will be updated.
 
 **Response:** `200 OK`
 ```json
@@ -570,200 +408,77 @@ Update group details.
   "id": "880e8400-e29b-41d4-a716-446655440003",
   "name": "Goa Trip 2026",
   "description": "Beach vacation with friends",
-  "simplifyDebts": false,
-  "updatedAt": "2026-01-14T11:00:00Z"
+  "currency": "USD",
+  "created_by": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "john@example.com",
+    "displayName": "John Doe",
+    "defaultCurrency": "INR",
+    "status": "ACTIVE"
+  },
+  "members": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com",
+      "displayName": "John Doe",
+      "defaultCurrency": "INR",
+      "status": "ACTIVE"
+    }
+  ]
 }
 ```
-
-**Error Responses:**
-- `403` - Insufficient permissions
 
 ---
 
 ### 4.5 Delete Group
-Delete a group (soft delete).
+Delete a group.
 
-**Endpoint:** `DELETE /groups/{groupId}`
-
-**Authentication:** Required (OWNER only)
-
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| groupId | UUID | Group identifier |
-
-**Response:** `204 No Content`
-
-**Error Responses:**
-- `403` - Only owner can delete group
-- `409` - Cannot delete group with unsettled balances
-
----
-
-## 5. Group Member APIs
-
-### 5.1 Get Group Members
-Retrieve all members of a group.
-
-**Endpoint:** `GET /groups/{groupId}/members`
+**Endpoint:** `DELETE /api/groups/{groupId}`
 
 **Authentication:** Required
 
 **Response:** `200 OK`
-```json
-{
-  "members": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "username": "john_doe",
-      "displayName": "John Doe",
-      "avatarUrl": "https://cdn.kadan.com/avatars/john.jpg",
-      "role": "OWNER",
-      "joinedAt": "2026-01-14T10:30:00Z",
-      "balance": 2500.00
-    },
-    {
-      "id": "660e8400-e29b-41d4-a716-446655440001",
-      "username": "jane_doe",
-      "displayName": "Jane Doe",
-      "avatarUrl": null,
-      "role": "MEMBER",
-      "joinedAt": "2026-01-14T10:30:00Z",
-      "balance": -1500.00
-    }
-  ]
-}
-```
-
----
-
-### 5.2 Add Member to Group
-Add a new member to the group.
-
-**Endpoint:** `POST /groups/{groupId}/members`
-
-**Authentication:** Required (OWNER or ADMIN)
-
-**Request Body:**
-```json
-{
-  "userId": "770e8400-e29b-41d4-a716-446655440002"
-}
-```
-
-**Response:** `201 Created`
-```json
-{
-  "id": "770e8400-e29b-41d4-a716-446655440002",
-  "username": "bob_smith",
-  "displayName": "Bob Smith",
-  "role": "MEMBER",
-  "joinedAt": "2026-01-14T11:00:00Z"
-}
-```
 
 **Error Responses:**
-- `403` - Insufficient permissions
-- `404` - User not found
-- `409` - User already a member
+- `404` - Group not found
 
 ---
 
-### 5.3 Remove Member from Group
-Remove a member from the group.
+### 4.6 Add Member to Group
+Add a member to an existing group.
 
-**Endpoint:** `DELETE /groups/{groupId}/members/{userId}`
-
-**Authentication:** Required (OWNER or ADMIN)
-
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| groupId | UUID | Group identifier |
-| userId | UUID | User to remove |
-
-**Response:** `204 No Content`
-
-**Error Responses:**
-- `403` - Cannot remove owner / Insufficient permissions
-- `409` - Member has unsettled balance
-
----
-
-### 5.4 Leave Group
-Remove self from group.
-
-**Endpoint:** `POST /groups/{groupId}/leave`
+**Endpoint:** `PUT /api/groups/{groupId}/members/{memberId}`
 
 **Authentication:** Required
 
-**Response:** `204 No Content`
+**Response:** `200 OK`
 
 **Error Responses:**
-- `403` - Owner cannot leave (must transfer ownership first)
-- `409` - User has unsettled balance
+- `404` - Group or user not found
 
 ---
 
-### 5.5 Update Member Role
-Change a member's role in the group.
+### 4.7 Remove Member from Group
+Remove a member from a group.
 
-**Endpoint:** `PATCH /groups/{groupId}/members/{userId}/role`
+**Endpoint:** `DELETE /api/groups/{groupId}/members/{memberId}`
 
-**Authentication:** Required (OWNER only)
-
-**Request Body:**
-```json
-{
-  "role": "ADMIN"
-}
-```
+**Authentication:** Required
 
 **Response:** `200 OK`
-```json
-{
-  "id": "660e8400-e29b-41d4-a716-446655440001",
-  "username": "jane_doe",
-  "role": "ADMIN",
-  "updatedAt": "2026-01-14T11:00:00Z"
-}
-```
+
+**Error Responses:**
+- `404` - Group or member not found
+- `409` - Cannot remove member with unsettled balance
 
 ---
 
-### 5.6 Transfer Ownership
-Transfer group ownership to another member.
+## 5. Expense APIs
 
-**Endpoint:** `POST /groups/{groupId}/transfer-ownership`
-
-**Authentication:** Required (OWNER only)
-
-**Request Body:**
-```json
-{
-  "newOwnerId": "660e8400-e29b-41d4-a716-446655440001"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Ownership transferred successfully",
-  "newOwner": {
-    "id": "660e8400-e29b-41d4-a716-446655440001",
-    "username": "jane_doe"
-  }
-}
-```
-
----
-
-## 6. Expense APIs
-
-### 6.1 Create Expense
+### 5.1 Create Expense
 Add a new expense to a group.
 
-**Endpoint:** `POST /groups/{groupId}/expenses`
+**Endpoint:** `POST /api/groups/{groupId}/expenses`
 
 **Authentication:** Required
 
@@ -771,687 +486,444 @@ Add a new expense to a group.
 ```json
 {
   "amount": 3000.00,
+  "date": "01-14-2026",
   "currency": "INR",
   "description": "Dinner at Beach Shack",
-  "categoryId": "990e8400-e29b-41d4-a716-446655440010",
   "paidBy": "550e8400-e29b-41d4-a716-446655440000",
-  "expenseDate": "2026-01-14",
-  "notes": "Seafood dinner for everyone",
   "splitType": "EQUAL",
-  "splits": [
-    { "userId": "550e8400-e29b-41d4-a716-446655440000" },
-    { "userId": "660e8400-e29b-41d4-a716-446655440001" },
-    { "userId": "770e8400-e29b-41d4-a716-446655440002" }
+  "members": [
+    { "id": "550e8400-e29b-41d4-a716-446655440000" },
+    { "id": "660e8400-e29b-41d4-a716-446655440001" },
+    { "id": "770e8400-e29b-41d4-a716-446655440002" }
   ]
 }
 ```
 
-**Alternative - Percentage Split:**
+**Split Type Details:**
+
+**EQUAL Split:**
 ```json
 {
-  "amount": 3000.00,
-  "description": "Hotel Room",
-  "paidBy": "550e8400-e29b-41d4-a716-446655440000",
-  "expenseDate": "2026-01-14",
-  "splitType": "PERCENTAGE",
-  "splits": [
-    { "userId": "550e8400-e29b-41d4-a716-446655440000", "percentage": 50 },
-    { "userId": "660e8400-e29b-41d4-a716-446655440001", "percentage": 30 },
-    { "userId": "770e8400-e29b-41d4-a716-446655440002", "percentage": 20 }
+  "splitType": "EQUAL",
+  "members": [
+    { "id": "user-id-1" },
+    { "id": "user-id-2" },
+    { "id": "user-id-3" }
   ]
 }
 ```
+Amount is divided equally among all members. The `share` field is ignored.
 
-**Alternative - Exact Amount Split:**
+**EXACT Split:**
 ```json
 {
-  "amount": 3000.00,
-  "description": "Shopping",
-  "paidBy": "550e8400-e29b-41d4-a716-446655440000",
-  "expenseDate": "2026-01-14",
   "splitType": "EXACT",
-  "splits": [
-    { "userId": "550e8400-e29b-41d4-a716-446655440000", "amount": 1500.00 },
-    { "userId": "660e8400-e29b-41d4-a716-446655440001", "amount": 1000.00 },
-    { "userId": "770e8400-e29b-41d4-a716-446655440002", "amount": 500.00 }
+  "members": [
+    { "id": "user-id-1", "share": 1500.00 },
+    { "id": "user-id-2", "share": 1000.00 },
+    { "id": "user-id-3", "share": 500.00 }
   ]
 }
 ```
+The `share` field specifies the exact amount each member owes. Sum of shares must equal the total amount.
 
-**Response:** `201 Created`
+**PERCENTAGE Split:**
 ```json
 {
-  "id": "aa0e8400-e29b-41d4-a716-446655440020",
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "amount": 3000.00,
-  "currency": "INR",
-  "description": "Dinner at Beach Shack",
-  "category": {
-    "id": "990e8400-e29b-41d4-a716-446655440010",
-    "name": "Food & Drink",
-    "icon": "🍕"
-  },
-  "paidBy": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "displayName": "John Doe"
-  },
-  "expenseDate": "2026-01-14",
-  "notes": "Seafood dinner for everyone",
-  "receiptUrl": null,
-  "splitType": "EQUAL",
-  "splits": [
-    {
-      "user": { "id": "550e8400-e29b-41d4-a716-446655440000", "username": "john_doe" },
-      "amount": 1000.00,
-      "percentage": 33.33
-    },
-    {
-      "user": { "id": "660e8400-e29b-41d4-a716-446655440001", "username": "jane_doe" },
-      "amount": 1000.00,
-      "percentage": 33.33
-    },
-    {
-      "user": { "id": "770e8400-e29b-41d4-a716-446655440002", "username": "bob_smith" },
-      "amount": 1000.00,
-      "percentage": 33.34
-    }
-  ],
-  "createdBy": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe"
-  },
-  "createdAt": "2026-01-14T12:00:00Z",
-  "status": "ACTIVE"
+  "splitType": "PERCENTAGE",
+  "members": [
+    { "id": "user-id-1", "share": 50 },
+    { "id": "user-id-2", "share": 30 },
+    { "id": "user-id-3", "share": 20 }
+  ]
 }
 ```
+The `share` field specifies the percentage each member owes. Percentages must sum to 100.
+
+**Field Validations:**
+
+| Field       | Type    | Required | Validation                                |
+|-------------|---------|----------|-------------------------------------------|
+| amount      | decimal | Yes      | Must be >= 0                              |
+| date        | string  | Yes      | Format: `MM-dd-uuuu` (e.g., "01-14-2026") |
+| currency    | string  | No       | 3-letter ISO currency code                |
+| description | string  | No       | 1-500 characters                          |
+| paidBy      | UUID    | Yes      | ID of the user who paid                   |
+| splitType   | enum    | Yes      | `EQUAL`, `EXACT`, or `PERCENTAGE`         |
+| members     | array   | Yes      | At least one member required              |
+
+**Member Object Fields:**
+
+| Field | Type    | Required    | Validation                                                  |
+|-------|---------|-------------|-------------------------------------------------------------|
+| id    | UUID    | Yes         | User ID                                                     |
+| share | decimal | Conditional | Required for EXACT and PERCENTAGE split types; must be >= 0 |
+
+**Response:** `200 OK`
 
 **Error Responses:**
-- `400` - Validation error (splits don't sum to total, etc.)
+- `400` - Validation error (splits don't sum to total, invalid date format, etc.)
 - `403` - User not a member of group
 - `404` - Group or payer not found
 
 ---
 
-### 6.2 Get All Expenses in Group
-Retrieve expenses for a group.
+### 5.2 Get All Expenses in Group
+Retrieve all expenses for a group.
 
-**Endpoint:** `GET /groups/{groupId}/expenses`
+**Endpoint:** `GET /api/groups/{groupId}/expenses`
 
 **Authentication:** Required
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| startDate | date | No | Filter from date |
-| endDate | date | No | Filter to date |
-| categoryId | UUID | No | Filter by category |
-| paidBy | UUID | No | Filter by payer |
-| page | int | No | Page number |
-| size | int | No | Page size |
-| sort | string | No | Sort field |
-
-**Example:** `GET /groups/{groupId}/expenses?startDate=2026-01-01&categoryId=990e8400-e29b-41d4-a716-446655440010`
 
 **Response:** `200 OK`
 ```json
-{
-  "content": [
-    {
-      "id": "aa0e8400-e29b-41d4-a716-446655440020",
-      "amount": 3000.00,
-      "currency": "INR",
-      "description": "Dinner at Beach Shack",
-      "category": { "id": "990e8400...", "name": "Food & Drink", "icon": "🍕" },
-      "paidBy": { "id": "550e8400...", "username": "john_doe" },
-      "expenseDate": "2026-01-14",
-      "splitType": "EQUAL",
-      "participantCount": 3,
-      "userShare": 1000.00,
-      "createdAt": "2026-01-14T12:00:00Z"
-    }
-  ],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 15,
-    "totalPages": 1
-  },
-  "summary": {
-    "totalExpenses": 15000.00,
-    "userPaid": 8000.00,
-    "userOwes": 5000.00
+[
+  {
+    "id": "aa0e8400-e29b-41d4-a716-446655440020",
+    "currency": "INR",
+    "description": "Dinner at Beach Shack",
+    "amount": 3000.00,
+    "date": "2026-01-14",
+    "splitType": "EQUAL",
+    "paidBy": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com",
+      "displayName": "John Doe",
+      "defaultCurrency": "INR",
+      "status": "ACTIVE"
+    },
+    "shares": [
+      {
+        "id": "bb0e8400-e29b-41d4-a716-446655440030",
+        "user_id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "John Doe",
+        "amount": 1000.00,
+        "isSettled": false
+      },
+      {
+        "id": "bb0e8400-e29b-41d4-a716-446655440031",
+        "user_id": "660e8400-e29b-41d4-a716-446655440001",
+        "name": "Jane Doe",
+        "amount": 1000.00,
+        "isSettled": false
+      },
+      {
+        "id": "bb0e8400-e29b-41d4-a716-446655440032",
+        "user_id": "770e8400-e29b-41d4-a716-446655440002",
+        "name": "Bob Smith",
+        "amount": 1000.00,
+        "isSettled": false
+      }
+    ],
+    "createdAt": "2026-01-14T12:00:00Z",
+    "updatedAt": "2026-01-14T12:00:00Z"
   }
-}
+]
 ```
+
+**Response Fields (per expense):**
+
+| Field       | Type     | Description                       |
+|-------------|----------|-----------------------------------|
+| id          | UUID     | Expense identifier                |
+| currency    | string   | Currency code                     |
+| description | string   | Expense description               |
+| amount      | decimal  | Total expense amount              |
+| date        | string   | Expense date (YYYY-MM-DD format)  |
+| splitType   | enum     | `EQUAL`, `EXACT`, or `PERCENTAGE` |
+| paidBy      | object   | User who paid for the expense     |
+| shares      | array    | List of expense splits per member |
+| createdAt   | datetime | When the expense was created      |
+| updatedAt   | datetime | When the expense was last updated |
+
+**Share Object Fields:**
+
+| Field     | Type    | Description                         |
+|-----------|---------|-------------------------------------|
+| id        | UUID    | Split identifier                    |
+| user_id   | UUID    | User ID                             |
+| name      | string  | User's display name                 |
+| amount    | decimal | Amount owed by this user            |
+| isSettled | boolean | Whether this share has been settled |
 
 ---
 
-### 6.3 Get Expense by ID
+### 5.3 Get Expense by ID
 Retrieve expense details.
 
-**Endpoint:** `GET /groups/{groupId}/expenses/{expenseId}`
+**Endpoint:** `GET /api/groups/{groupId}/expenses/{expenseId}`
 
 **Authentication:** Required
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| groupId | UUID | Group identifier |
+| expenseId | UUID | Expense identifier |
 
 **Response:** `200 OK`
 ```json
 {
   "id": "aa0e8400-e29b-41d4-a716-446655440020",
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "amount": 3000.00,
   "currency": "INR",
   "description": "Dinner at Beach Shack",
-  "category": {
-    "id": "990e8400-e29b-41d4-a716-446655440010",
-    "name": "Food & Drink",
-    "icon": "🍕"
-  },
+  "amount": 3000.00,
+  "date": "2026-01-14",
+  "splitType": "EQUAL",
   "paidBy": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "displayName": "John Doe"
+    "email": "john@example.com",
+    "displayName": "John Doe",
+    "defaultCurrency": "INR",
+    "status": "ACTIVE"
   },
-  "expenseDate": "2026-01-14",
-  "notes": "Seafood dinner for everyone",
-  "receiptUrl": null,
-  "splitType": "EQUAL",
-  "splits": [
+  "shares": [
     {
-      "user": { "id": "550e8400...", "username": "john_doe", "displayName": "John Doe" },
+      "id": "bb0e8400-e29b-41d4-a716-446655440030",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "John Doe",
       "amount": 1000.00,
-      "percentage": 33.33,
       "isSettled": false
     }
   ],
-  "createdBy": { "id": "550e8400...", "username": "john_doe" },
   "createdAt": "2026-01-14T12:00:00Z",
-  "updatedAt": "2026-01-14T12:00:00Z",
-  "status": "ACTIVE"
+  "updatedAt": "2026-01-14T12:00:00Z"
 }
 ```
 
+**Error Responses:**
+- `404` - Expense or group not found
+
 ---
 
-### 6.4 Update Expense
+### 5.4 Update Expense
 Modify an existing expense.
 
-**Endpoint:** `PUT /groups/{groupId}/expenses/{expenseId}`
+**Endpoint:** `PATCH /api/groups/{groupId}/expenses/{expenseId}`
 
-**Authentication:** Required (Creator, ADMIN, or OWNER)
+**Authentication:** Required
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| groupId | UUID | Group identifier |
+| expenseId | UUID | Expense identifier |
 
 **Request Body:**
 ```json
 {
   "amount": 3500.00,
+  "date": "01-14-2026",
+  "currency": "INR",
   "description": "Dinner at Beach Shack (updated)",
-  "categoryId": "990e8400-e29b-41d4-a716-446655440010",
   "paidBy": "550e8400-e29b-41d4-a716-446655440000",
-  "expenseDate": "2026-01-14",
-  "notes": "Added drinks to the bill",
   "splitType": "EQUAL",
-  "splits": [
-    { "userId": "550e8400-e29b-41d4-a716-446655440000" },
-    { "userId": "660e8400-e29b-41d4-a716-446655440001" },
-    { "userId": "770e8400-e29b-41d4-a716-446655440002" }
+  "members": [
+    { "id": "550e8400-e29b-41d4-a716-446655440000" },
+    { "id": "660e8400-e29b-41d4-a716-446655440001" },
+    { "id": "770e8400-e29b-41d4-a716-446655440002" }
   ]
 }
 ```
 
+**Field Validations:**
+
+| Field       | Type    | Required | Validation                        |
+|-------------|---------|----------|-----------------------------------|
+| amount      | decimal | No       | Must be >= 0                      |
+| date        | string  | No       | Format: `MM-dd-uuuu`              |
+| currency    | string  | No       | 3-letter ISO currency code        |
+| description | string  | No       | 1-500 characters                  |
+| paidBy      | UUID    | No       | ID of the user who paid           |
+| splitType   | enum    | No       | `EQUAL`, `EXACT`, or `PERCENTAGE` |
+| members     | array   | No       | List of member splits             |
+
+**Note:** All fields are optional. Only provided fields will be updated. If updating splits, provide the complete new split configuration which includes splitType and members.
+
 **Response:** `200 OK`
-```json
-{
-  "id": "aa0e8400-e29b-41d4-a716-446655440020",
-  "amount": 3500.00,
-  "description": "Dinner at Beach Shack (updated)",
-  "updatedAt": "2026-01-14T13:00:00Z"
-}
-```
+
+**Error Responses:**
+- `400` - Validation error
+- `404` - Expense or group not found
 
 ---
 
-### 6.5 Delete Expense
-Soft delete an expense.
+### 5.5 Delete Expense
+Delete an expense.
 
-**Endpoint:** `DELETE /groups/{groupId}/expenses/{expenseId}`
+**Endpoint:** `DELETE /api/groups/{groupId}/expenses/{expenseId}`
 
-**Authentication:** Required (Creator, ADMIN, or OWNER)
+**Authentication:** Required
 
-**Response:** `204 No Content`
+**Response:** `200 OK`
+
+**Error Responses:**
+- `404` - Expense or group not found
 
 ---
 
-## 7. Balance APIs
+## 6. Balance APIs
 
-### 7.1 Get Group Balances
-Get all balances within a group.
+### 6.1 Get Group Balances
+Get all balances and debts within a group.
 
-**Endpoint:** `GET /groups/{groupId}/balances`
+**Endpoint:** `GET /api/groups/{groupId}/balances`
 
 **Authentication:** Required
 
 **Response:** `200 OK`
 ```json
 {
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "currentUser": { "id": "550e8400...", "username": "john_doe" },
-  "memberBalances": [
+  "balances": [
     {
-      "user": { "id": "550e8400...", "username": "john_doe", "displayName": "John Doe" },
-      "totalPaid": 8000.00,
-      "totalOwed": 5000.00,
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "John Doe",
+      "paid": 8000.00,
+      "owed": 5000.00,
       "netBalance": 3000.00
     },
     {
-      "user": { "id": "660e8400...", "username": "jane_doe", "displayName": "Jane Doe" },
-      "totalPaid": 4000.00,
-      "totalOwed": 5000.00,
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "name": "Jane Doe",
+      "paid": 4000.00,
+      "owed": 5000.00,
       "netBalance": -1000.00
     },
     {
-      "user": { "id": "770e8400...", "username": "bob_smith", "displayName": "Bob Smith" },
-      "totalPaid": 3000.00,
-      "totalOwed": 5000.00,
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "name": "Bob Smith",
+      "paid": 3000.00,
+      "owed": 5000.00,
       "netBalance": -2000.00
     }
   ],
-  "simplifiedDebts": [
+  "debts": [
     {
-      "from": { "id": "660e8400...", "username": "jane_doe" },
-      "to": { "id": "550e8400...", "username": "john_doe" },
+      "debtor": "660e8400-e29b-41d4-a716-446655440001",
+      "creditor": "550e8400-e29b-41d4-a716-446655440000",
       "amount": 1000.00
     },
     {
-      "from": { "id": "770e8400...", "username": "bob_smith" },
-      "to": { "id": "550e8400...", "username": "john_doe" },
+      "debtor": "770e8400-e29b-41d4-a716-446655440002",
+      "creditor": "550e8400-e29b-41d4-a716-446655440000",
       "amount": 2000.00
     }
   ]
 }
 ```
 
----
+**Balance Object Fields:**
 
-### 7.2 Get Pairwise Balance
-Get balance between two specific users in a group.
+| Field      | Type    | Description                                                |
+|------------|---------|------------------------------------------------------------|
+| id         | UUID    | User identifier                                            |
+| name       | string  | User's display name                                        |
+| paid       | decimal | Total amount paid by this user                             |
+| owed       | decimal | Total amount owed by this user                             |
+| netBalance | decimal | Net balance (positive = owed to them, negative = they owe) |
 
-**Endpoint:** `GET /groups/{groupId}/balances/users/{userId}`
+**Debt Object Fields:**
 
-**Authentication:** Required
+| Field    | Type    | Description                          |
+|----------|---------|--------------------------------------|
+| debtor   | UUID    | User ID of the person who owes money |
+| creditor | UUID    | User ID of the person owed money     |
+| amount   | decimal | Amount owed                          |
 
-**Path Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| groupId | UUID | Group identifier |
-| userId | UUID | Other user's ID |
-
-**Response:** `200 OK`
-```json
-{
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "currentUser": { "id": "550e8400...", "username": "john_doe" },
-  "otherUser": { "id": "660e8400...", "username": "jane_doe" },
-  "balance": 1000.00,
-  "direction": "OWED_TO_YOU",
-  "expenses": [
-    {
-      "id": "aa0e8400...",
-      "description": "Dinner",
-      "amount": 3000.00,
-      "paidBy": "john_doe",
-      "userShare": 1000.00,
-      "date": "2026-01-14"
-    }
-  ]
-}
-```
+**Error Responses:**
+- `404` - Group not found
 
 ---
 
-## 8. Settlement APIs
+## 7. Settlement APIs
 
-### 8.1 Create Settlement
-Record a payment between users.
+### 7.1 Record Settlement
+Record a payment/settlement between users in a group.
 
-**Endpoint:** `POST /groups/{groupId}/settlements`
+**Endpoint:** `POST /api/groups/{groupId}/settlement`
 
 **Authentication:** Required
 
 **Request Body:**
 ```json
 {
-  "payeeId": "550e8400-e29b-41d4-a716-446655440000",
+  "creditor_id": "550e8400-e29b-41d4-a716-446655440000",
   "amount": 1000.00,
-  "settlementDate": "2026-01-14",
-  "paymentMethod": "UPI",
-  "notes": "Paid via Google Pay"
+  "currency": "INR"
 }
 ```
 
-**Response:** `201 Created`
-```json
-{
-  "id": "bb0e8400-e29b-41d4-a716-446655440030",
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "payer": { "id": "660e8400...", "username": "jane_doe" },
-  "payee": { "id": "550e8400...", "username": "john_doe" },
-  "amount": 1000.00,
-  "currency": "INR",
-  "settlementDate": "2026-01-14",
-  "paymentMethod": "UPI",
-  "notes": "Paid via Google Pay",
-  "status": "PENDING",
-  "createdAt": "2026-01-14T14:00:00Z"
-}
-```
+**Field Validations:**
 
----
+| Field       | Type    | Required | Validation                           |
+|-------------|---------|----------|--------------------------------------|
+| creditor_id | UUID    | Yes      | ID of the user receiving the payment |
+| amount      | decimal | Yes      | Must be >= 0                         |
+| currency    | string  | No       | 3-letter ISO currency code           |
 
-### 8.2 Get Settlements in Group
-Retrieve settlement history.
-
-**Endpoint:** `GET /groups/{groupId}/settlements`
-
-**Authentication:** Required
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| status | string | No | Filter by status (PENDING, CONFIRMED, REJECTED) |
-| page | int | No | Page number |
-| size | int | No | Page size |
+**Note:** The authenticated user is automatically recorded as the debtor (person making the payment).
 
 **Response:** `200 OK`
 ```json
 {
-  "content": [
-    {
-      "id": "bb0e8400-e29b-41d4-a716-446655440030",
-      "payer": { "id": "660e8400...", "username": "jane_doe" },
-      "payee": { "id": "550e8400...", "username": "john_doe" },
-      "amount": 1000.00,
-      "settlementDate": "2026-01-14",
-      "paymentMethod": "UPI",
-      "status": "CONFIRMED",
-      "createdAt": "2026-01-14T14:00:00Z"
-    }
-  ],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 5,
-    "totalPages": 1
-  }
-}
-```
-
----
-
-### 8.3 Get Settlement by ID
-Retrieve settlement details.
-
-**Endpoint:** `GET /groups/{groupId}/settlements/{settlementId}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-```json
-{
-  "id": "bb0e8400-e29b-41d4-a716-446655440030",
-  "groupId": "880e8400-e29b-41d4-a716-446655440003",
-  "payer": { "id": "660e8400...", "username": "jane_doe", "displayName": "Jane Doe" },
-  "payee": { "id": "550e8400...", "username": "john_doe", "displayName": "John Doe" },
+  "id": "cc0e8400-e29b-41d4-a716-446655440040",
   "amount": 1000.00,
   "currency": "INR",
-  "settlementDate": "2026-01-14",
-  "paymentMethod": "UPI",
-  "notes": "Paid via Google Pay",
-  "status": "PENDING",
-  "createdAt": "2026-01-14T14:00:00Z",
-  "confirmedAt": null
+  "date": "2026-01-14",
+  "creditor": "550e8400-e29b-41d4-a716-446655440000",
+  "debtor": "660e8400-e29b-41d4-a716-446655440001"
 }
 ```
 
----
+**Response Fields:**
 
-## 9. Activity APIs
+| Field    | Type    | Description                         |
+|----------|---------|-------------------------------------|
+| id       | UUID    | Settlement identifier               |
+| amount   | decimal | Settlement amount                   |
+| currency | string  | Currency code                       |
+| date     | string  | Settlement date (YYYY-MM-DD format) |
+| creditor | UUID    | User ID receiving the payment       |
+| debtor   | UUID    | User ID making the payment          |
 
-### 9.1 Get Group Activity
-Retrieve activity feed for a group.
-
-**Endpoint:** `GET /groups/{groupId}/activities`
-
-**Authentication:** Required
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| type | string | No | Filter by activity type |
-| page | int | No | Page number |
-| size | int | No | Page size |
-
-**Response:** `200 OK`
-```json
-{
-  "content": [
-    {
-      "id": "cc0e8400-e29b-41d4-a716-446655440040",
-      "type": "EXPENSE_CREATED",
-      "actor": { "id": "550e8400...", "username": "john_doe" },
-      "description": "John Doe added \"Dinner at Beach Shack\" (₹3,000.00)",
-      "metadata": {
-        "expenseId": "aa0e8400...",
-        "amount": 3000.00
-      },
-      "createdAt": "2026-01-14T12:00:00Z"
-    },
-    {
-      "id": "cc0e8400-e29b-41d4-a716-446655440041",
-      "type": "MEMBER_ADDED",
-      "actor": { "id": "550e8400...", "username": "john_doe" },
-      "description": "John Doe added Bob Smith to the group",
-      "metadata": {
-        "memberId": "770e8400..."
-      },
-      "createdAt": "2026-01-14T10:30:00Z"
-    }
-  ],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 25,
-    "totalPages": 2
-  }
-}
-```
-
----
-
-### 9.2 Get User Activity
-Retrieve activity feed for current user across all groups.
-
-**Endpoint:** `GET /users/me/activities`
-
-**Authentication:** Required
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| groupId | UUID | No | Filter by group |
-| type | string | No | Filter by activity type |
-| page | int | No | Page number |
-| size | int | No | Page size |
-
-**Response:** `200 OK`
-```json
-{
-  "content": [
-    {
-      "id": "cc0e8400-e29b-41d4-a716-446655440040",
-      "type": "EXPENSE_CREATED",
-      "group": { "id": "880e8400...", "name": "Trip to Goa" },
-      "actor": { "id": "660e8400...", "username": "jane_doe" },
-      "description": "Jane Doe added \"Taxi to Airport\" (₹500.00)",
-      "createdAt": "2026-01-14T16:00:00Z"
-    }
-  ],
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 50,
-    "totalPages": 3
-  }
-}
-```
-
----
-
-## 10. Health & Utility APIs
-
-### 10.1 Health Check
-Check API health status.
-
-**Endpoint:** `GET /health`
-
-**Authentication:** None
-
-**Response:** `200 OK`
-```json
-{
-  "status": "UP",
-  "timestamp": "2026-01-14T10:00:00Z",
-  "components": {
-    "database": "UP",
-    "redis": "UP"
-  }
-}
-```
-
----
-
-### 10.2 Get Supported Currencies
-Retrieve list of supported currencies.
-
-**Endpoint:** `GET /currencies`
-
-**Authentication:** None
-
-**Response:** `200 OK`
-```json
-{
-  "currencies": [
-    { "code": "INR", "name": "Indian Rupee", "symbol": "₹" },
-    { "code": "USD", "name": "US Dollar", "symbol": "$" },
-    { "code": "EUR", "name": "Euro", "symbol": "€" },
-    { "code": "GBP", "name": "British Pound", "symbol": "£" },
-    { "code": "AUD", "name": "Australian Dollar", "symbol": "A$" },
-    { "code": "CAD", "name": "Canadian Dollar", "symbol": "C$" },
-    { "code": "SGD", "name": "Singapore Dollar", "symbol": "S$" },
-    { "code": "AED", "name": "UAE Dirham", "symbol": "د.إ" }
-  ]
-}
-```
-
----
-
-## 11. Error Response Format
-
-All error responses follow this format:
-
-```json
-{
-  "timestamp": "2026-01-14T10:30:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "code": "VALIDATION_ERROR",
-  "message": "Validation failed",
-  "details": [
-    {
-      "field": "amount",
-      "message": "must be greater than 0"
-    },
-    {
-      "field": "splits",
-      "message": "split amounts must sum to total expense amount"
-    }
-  ],
-  "path": "/api/v1/groups/880e8400.../expenses",
-  "traceId": "abc123xyz789"
-}
-```
-
----
-
-## 12. Rate Limiting Headers
-
-Rate limit information is included in response headers:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1704067260
-```
-
-When rate limit is exceeded:
-```
-HTTP/1.1 429 Too Many Requests
-Retry-After: 60
-```
+**Error Responses:**
+- `400` - Validation error
+- `404` - User not a member of group
+- `404` - Group or creditor not found
 
 ---
 
 ## Appendix A: API Endpoint Summary
 
-| Method             | Endpoint                                     | Description                 |
-|--------------------|----------------------------------------------|-----------------------------|
-| **Authentication** |                                              |                             |
-| POST               | /auth/register                               | Register new user           |
-| POST               | /auth/login                                  | User login                  |
-| POST               | /auth/refresh                                | Refresh tokens              |
-| POST               | /auth/logout                                 | User logout                 |
-| POST               | /auth/password/reset-request                 | Request password reset      |
-| POST               | /auth/password/reset                         | Reset password              |
-| POST               | /auth/password/change                        | Change password             |
-| **Users**          |                                              |                             |
-| GET                | /users/me                                    | Get current user profile    |
-| PATCH              | /users/me                                    | Update current user profile |
-| GET                | /users/search                                | Search users                |
-| GET                | /users/{userId}                              | Get user by ID              |
-| GET                | /users/me/balance                            | Get overall balance         |
-| GET                | /users/me/activities                         | Get user activity           |
-| **Groups**         |                                              |                             |
-| POST               | /groups                                      | Create group                |
-| GET                | /groups                                      | Get all groups              |
-| GET                | /groups/{groupId}                            | Get group by ID             |
-| PATCH              | /groups/{groupId}                            | Update group                |
-| DELETE             | /groups/{groupId}                            | Delete group                |
-| **Group Members**  |                                              |                             |
-| GET                | /groups/{groupId}/members                    | Get members                 |
-| POST               | /groups/{groupId}/members                    | Add member                  |
-| DELETE             | /groups/{groupId}/members/{userId}           | Remove member               |
-| POST               | /groups/{groupId}/leave                      | Leave group                 |
-| PATCH              | /groups/{groupId}/members/{userId}/role      | Update member role          |
-| POST               | /groups/{groupId}/transfer-ownership         | Transfer ownership          |
-| **Expenses**       |                                              |                             |
-| POST               | /groups/{groupId}/expenses                   | Create expense              |
-| GET                | /groups/{groupId}/expenses                   | Get expenses                |
-| GET                | /groups/{groupId}/expenses/{expenseId}       | Get expense by ID           |
-| PUT                | /groups/{groupId}/expenses/{expenseId}       | Update expense              |
-| DELETE             | /groups/{groupId}/expenses/{expenseId}       | Delete expense              |
-| **Balances**       |                                              |                             |
-| GET                | /groups/{groupId}/balances                   | Get group balances          |
-| GET                | /groups/{groupId}/balances/users/{userId}    | Get pairwise balance        |
-| **Settlements**    |                                              |                             |
-| POST               | /groups/{groupId}/settlements                | Create settlement           |
-| GET                | /groups/{groupId}/settlements                | Get settlements             |
-| GET                | /groups/{groupId}/settlements/{settlementId} | Get settlement by ID        |
-| **Activities**     |                                              |                             |
-| GET                | /groups/{groupId}/activities                 | Get group activity          |
-| **Utility**        |                                              |                             |
-| GET                | /health                                      | Health check                |
-| GET                | /currencies                                  | Get supported currencies    |
+| Method             | Endpoint                                     | Description                 | Auth Required |
+|--------------------|----------------------------------------------|-----------------------------|---------------|
+| **Authentication** |                                              |                             |               |
+| POST               | `/api/public/register`                       | Register new user           | No            |
+| POST               | `/api/public/login`                          | User login                  | No            |
+| **Users**          |                                              |                             |               |
+| GET                | `/api/users/me`                              | Get current user profile    | Yes           |
+| PUT                | `/api/users/me`                              | Update current user profile | Yes           |
+| GET                | `/api/users/{userId}`                        | Get user by ID              | Yes           |
+| **Groups**         |                                              |                             |               |
+| POST               | `/api/groups`                                | Create group                | Yes           |
+| GET                | `/api/groups`                                | Get all groups              | Yes           |
+| GET                | `/api/groups/{groupId}`                      | Get group by ID             | Yes           |
+| PUT                | `/api/groups/{groupId}`                      | Update group                | Yes           |
+| DELETE             | `/api/groups/{groupId}`                      | Delete group                | Yes           |
+| PUT                | `/api/groups/{groupId}/members/{memberId}`   | Add member to group         | Yes           |
+| DELETE             | `/api/groups/{groupId}/members/{memberId}`   | Remove member from group    | Yes           |
+| **Expenses**       |                                              |                             |               |
+| POST               | `/api/groups/{groupId}/expenses`             | Create expense              | Yes           |
+| GET                | `/api/groups/{groupId}/expenses`             | Get all expenses in group   | Yes           |
+| GET                | `/api/groups/{groupId}/expenses/{expenseId}` | Get expense by ID           | Yes           |
+| PATCH              | `/api/groups/{groupId}/expenses/{expenseId}` | Update expense              | Yes           |
+| DELETE             | `/api/groups/{groupId}/expenses/{expenseId}` | Delete expense              | Yes           |
+| **Balances**       |                                              |                             |               |
+| GET                | `/api/groups/{groupId}/balances`             | Get group balances          | Yes           |
+| **Settlements**    |                                              |                             |               |
+| POST               | `/api/groups/{groupId}/settlement`           | Record settlement           | Yes           |
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: January 14, 2026*
+*Document Version: 2.0*  
+*Last Updated: January 24, 2026*
