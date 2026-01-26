@@ -1,0 +1,105 @@
+/**
+ * UserMenu Styles
+ * 
+ * Dropdown menu with retro-maximalist styling.
+ * Follows STYLE_GUIDE.md specifications.
+ */
+
+.user-menu {
+  position: relative;
+}
+
+/* Trigger button */
+.user-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: transparent;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.user-menu__trigger:hover {
+  background-color: var(--color-yellow-2);
+  border-color: var(--color-ink);
+}
+
+.user-menu__trigger:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.user-menu__name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu__arrow {
+  font-size: 0.6em;
+  transition: transform 0.2s ease;
+}
+
+.user-menu__arrow--open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.user-menu__dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  min-width: 150px;
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-default);
+  z-index: 100;
+  overflow: hidden;
+}
+
+/* Menu items */
+.user-menu__item {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.user-menu__item:hover {
+  background-color: var(--color-yellow-2);
+}
+
+.user-menu__item:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.user-menu__item + .user-menu__item {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Danger variant for logout */
+.user-menu__item--danger {
+  color: var(--color-red-1);
+}
+
+.user-menu__item--danger:hover {
+  background-color: var(--color-red-2);
+}

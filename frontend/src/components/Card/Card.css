@@ -1,0 +1,83 @@
+/**
+ * Card Styles
+ * 
+ * Follows STYLE_GUIDE.md specifications:
+ * - Paper-2 background
+ * - Thick ink border (2px)
+ * - Chunky shadow (6px offset)
+ * - Optional accent header bars (yellow for key panels)
+ */
+
+.card {
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-default);
+  overflow: hidden;
+}
+
+/* ========================================
+   INTERACTIVE CARD (clickable)
+   ======================================== */
+
+.card--interactive {
+  cursor: pointer;
+  transition: 
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.card--interactive:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.card--interactive:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-pressed);
+}
+
+.card--interactive:focus-visible {
+  outline: 3px solid var(--color-yellow-1);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   CARD HEADER
+   ======================================== */
+
+.card__header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+/* Header accent variants */
+.card__header--default {
+  background-color: var(--color-paper);
+}
+
+.card__header--yellow {
+  background-color: var(--color-yellow-1);
+}
+
+.card__header--red {
+  background-color: var(--color-primary);
+}
+
+.card__header--red .card__title {
+  color: var(--color-primary-contrast);
+}
+
+.card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+/* ========================================
+   CARD CONTENT
+   ======================================== */
+
+.card__content {
+  padding: var(--space-4);
+}
