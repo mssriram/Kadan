@@ -1,4 +1,4 @@
-HELP.md
+backend/HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -36,8 +36,11 @@ build/
 ### VS Code ###
 .vscode/
 
-docs/db/logs
-docs/db/scripts
 docs/WORKPLAN.md
 src/main/resources/application.yml
-
+/frontend/.vite/
+/frontend/docs/
+/frontend/node_modules/
+/frontend/copilot-instructions.md
+/frontend/.env.local
+/backend/docs/db/

@@ -1,0 +1,30 @@
+server:
+  port: 3000
+
+app:
+  group:
+    max-members: 20
+
+jwt:
+  expiration: 14400 # 4 hours in seconds
+  secret: Hj6R5IeBkTAY7STFDGzpykmAYkXgZXd4AxjYZRIOqGi
+  issuer: Kadan
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  mvc:
+    problemdetails:
+      enabled: false
+  jackson:
+    default-property-inclusion: non_null
