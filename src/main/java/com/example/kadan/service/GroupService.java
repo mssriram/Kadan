@@ -17,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GroupService {
+
+    @Value("${app.group.max-members}")
+    private int maxGroupMembers;
 
     private final BalanceService balanceService;
     private final GroupRepository groupRepository;
@@ -71,11 +75,15 @@ public class GroupService {
     }
 
     //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
+    //TODO max members should be less than 20
     @Transactional
     public void addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("User not found");
+        }
+        if (group.getMembers().size() == maxGroupMembers) {
+            throw new DataIntegrityViolationException("Cannot add more members to the group. Maximum limit reached.");
         }
 
         //Return success if member already part of group
@@ -91,7 +99,6 @@ public class GroupService {
     }
 
     //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
-    //TODO members list can be null. should handle that case.
     @Transactional
     public CreateGroupResponseDto createGroup(UUID currentUser, GroupDto groupDto) {
         User groupCreatorUser = userRepository.findById(currentUser).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -105,6 +112,10 @@ public class GroupService {
         Group savedGroup = groupRepository.save(group);
 
         List<User> members = userRepository.findByEmailIn(groupDto.members());
+
+        if (members.size() > maxGroupMembers) {
+            throw new DataIntegrityViolationException("Cannot add more members to the group. Maximum limit reached.");
+        }
 
         List<GroupMember> groupMembers = members.stream()
                 .map(user -> user.getId() == currentUser ?

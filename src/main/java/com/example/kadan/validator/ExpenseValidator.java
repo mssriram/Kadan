@@ -8,7 +8,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +19,6 @@ public class ExpenseValidator {
 
     public static void validateCreateExpense(CreateExpenseDto request) {
         validateAmount(request.amount());
-//        validateDate(request.date());
         validateShareBigDecimal(request.members());
         validateNoDuplicateMembers(request.members());
         validateSplitType(request.splitType(), request.members(), request.amount());
@@ -39,7 +37,7 @@ public class ExpenseValidator {
     }
 
     private static void validateAmount(BigDecimal amount) {
-        if (Objects.nonNull(amount) && amount.scale() > 2) {
+        if (amount.scale() > 2) {
             throw new IllegalArgumentException("Amount cannot have more than 2 decimal places");
         }
     }
@@ -75,7 +73,7 @@ public class ExpenseValidator {
     private static void validateExactSplit(List<MemberSplitDto> members, BigDecimal amount) {
         BigDecimal sum = BigDecimal.ZERO;
         for (MemberSplitDto member : members) {
-            if (member.share() == null) {
+            if (Objects.isNull(member.share())) {
                 throw new IllegalArgumentException("share must be provided for EXACT split type");
             }
             sum = sum.add(member.share());
@@ -89,12 +87,13 @@ public class ExpenseValidator {
     private static void validatePercentageSplit(List<MemberSplitDto> members) {
         BigDecimal sum = BigDecimal.ZERO;
         for (MemberSplitDto member : members) {
-            if (member.share() == null) {
-                throw new IllegalArgumentException("share must be provided for EXACT split type");
+            if (Objects.isNull(member.share())) {
+                throw new IllegalArgumentException("value must be provided for PERCENTAGE split type");
             }
+            sum = sum.add(member.share());
         }
 
-        if (!sum.equals(new BigDecimal(100, new MathContext(2)))) {
+        if (sum.compareTo(new BigDecimal(100)) != 0) {
             throw new IllegalArgumentException(String.format("PERCENTAGE shares (%.2f) must sum to 100", sum));
         }
     }

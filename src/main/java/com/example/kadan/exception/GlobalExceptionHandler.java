@@ -20,8 +20,9 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     public static final String VALIDATION = "VALIDATION_ERROR";
+    public static final String RESOURCE_CONFLICT = "RESOURCE_CONFLICT";
     public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
-    public static final String DATE_FORMAT_VALIDATION_ERROR = "Date should be in the format YYYY-MM-DD";
+    public static final String DATE_FORMAT_VALIDATION_ERROR = "Date should be in the format MM-DD-YYYY";
 
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<ValidationErrorResponseDto> handleValidationException(Exception ex) {
@@ -29,7 +30,7 @@ public class GlobalExceptionHandler {
             case IllegalArgumentException illegalArgEx -> {
                 log.info("Validation failed: {}", illegalArgEx.getMessage());
                 Map<String, String> message = Map.of("error", illegalArgEx.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponseDto(VALIDATION, message));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new ValidationErrorResponseDto(VALIDATION, message));
             }
             case MethodArgumentNotValidException methodArgEx -> {
                 log.info("Validation failed: {}", methodArgEx.getMessage());

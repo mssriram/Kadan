@@ -3,6 +3,7 @@ package com.example.kadan.controller;
 import com.example.kadan.dto.LoginUserDto;
 import com.example.kadan.dto.RegisterUserDto;
 import com.example.kadan.dto.RegisterUserResponseDto;
+import com.example.kadan.dto.UserProfileDto;
 import com.example.kadan.entity.User;
 import com.example.kadan.service.AuthService;
 import com.example.kadan.service.JwtService;
@@ -24,6 +25,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
 
+    //TODO add password validation.
     @PostMapping("/public/register")
     public ResponseEntity<RegisterUserResponseDto> register(@Valid @RequestBody RegisterUserDto userDto) {
         User newUser = authService.registerUser(userDto);
@@ -38,12 +40,12 @@ public class AuthController {
     }
 
     @PostMapping("/public/login")
-    public ResponseEntity<Void> login(HttpServletResponse response, @Valid @RequestBody LoginUserDto loginUserDto) {
+    public ResponseEntity<UserProfileDto> login(HttpServletResponse response, @Valid @RequestBody LoginUserDto loginUserDto) {
         User user = authService.authenticateUser(loginUserDto);
 
         String token = jwtService.generateToken(user);
         response.setHeader("Authorization", "Bearer " + token);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(UserProfileDto.fromEntity(user));
     }
 }

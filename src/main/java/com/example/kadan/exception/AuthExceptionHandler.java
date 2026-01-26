@@ -15,7 +15,7 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler({BadCredentialsException.class})
     public ResponseEntity<ErrorResponseDto> handleAuthenticationException(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(ERROR_TYPE, "Invalid username or password"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(ERROR_TYPE, "Authentication failed"));
     }
 
     @ExceptionHandler({AuthenticationException.class})
