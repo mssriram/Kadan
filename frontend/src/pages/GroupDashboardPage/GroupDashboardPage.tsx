@@ -906,11 +906,26 @@ export const GroupDashboardPage: React.FC = () => {
         {selectedDebt && (
           <form
             className="modal-form"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              // TODO: Implement settlement
-              setIsSettlementModalOpen(false);
-              setSelectedDebt(null);
+              try {
+                await groupService.recordSettlement(group.id, {
+                  creditor_id: selectedDebt.creditor,
+                  amount: selectedDebt.amount,
+                  currency: group.currency,
+                });
+                
+                // Refresh balances after settlement
+                const updatedBalances = await groupService.getGroupBalances(group.id);
+                setBalances(updatedBalances.balances);
+                setDebts(updatedBalances.debts);
+                
+                setIsSettlementModalOpen(false);
+                setSelectedDebt(null);
+              } catch (err) {
+                // Errors are handled by global toast in api.ts
+                console.error('Failed to record settlement:', err);
+              }
             }}
           >
             <div className="settlement-info">
@@ -918,32 +933,16 @@ export const GroupDashboardPage: React.FC = () => {
                 You are settling your debt with{' '}
                 <strong>{getUserName(selectedDebt.creditor, group.members)}</strong>
               </p>
-              <p className="settlement-amount">
-                Amount: <span className="money">{formatCurrency(selectedDebt.amount, group.currency)}</span>
-              </p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="settlement-amount">Amount to Settle</label>
-              <Input
-                id="settlement-amount"
-                type="number"
-                defaultValue={selectedDebt.amount}
-                placeholder="0.00"
-              />
+            <div className="settlement-amount-display">
+              <span className="settlement-amount-label">Amount</span>
+              <span className="settlement-amount-value money">
+                {formatCurrency(selectedDebt.amount, group.currency)}
+              </span>
             </div>
 
             <div className="modal-actions">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setIsSettlementModalOpen(false);
-                  setSelectedDebt(null);
-                }}
-              >
-                Cancel
-              </Button>
               <Button type="submit" variant="primary">
                 Record Settlement
               </Button>

@@ -202,10 +202,6 @@ export const del = async (endpoint: string): Promise<void> => {
     }
 };
 
-// ========================================
-// API OBJECT (for namespaced imports)
-// ========================================
-
 export const api = {
     get,
     post,

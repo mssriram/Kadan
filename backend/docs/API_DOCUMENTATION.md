@@ -840,7 +840,7 @@ Get all balances and debts within a group.
 ### 7.1 Record Settlement
 Record a payment/settlement between users in a group.
 
-**Endpoint:** `POST /api/groups/{groupId}/settlement`
+**Endpoint:** `POST /api/balances/{groupId}/settlement`
 
 **Authentication:** Required
 
@@ -921,7 +921,7 @@ Record a payment/settlement between users in a group.
 | **Balances**       |                                              |                             |               |
 | GET                | `/api/balances/{groupId}`                    | Get group balances          | Yes           |
 | **Settlements**    |                                              |                             |               |
-| POST               | `/api/groups/{groupId}/settlement`           | Record settlement           | Yes           |
+| POST               | `/api/balances/{groupId}/settlement`         | Record settlement           | Yes           |
 
 ---
 

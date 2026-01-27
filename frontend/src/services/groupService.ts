@@ -271,6 +271,40 @@ export const removeMember = async (groupId: string, memberId: string): Promise<v
 };
 
 /**
+ * Request body for recording a settlement.
+ */
+export interface RecordSettlementRequest {
+  creditor_id: string;
+  amount: number;
+  currency?: string;
+}
+
+/**
+ * Response from recording a settlement.
+ */
+export interface SettlementResponse {
+  id: string;
+  amount: number;
+  currency: string;
+  date: string;
+  creditor: string;
+  debtor: string;
+}
+
+/**
+ * Record a settlement payment between users.
+ * POST /api/balances/{groupId}/settlement
+ * 
+ * The authenticated user is automatically the debtor (person paying).
+ */
+export const recordSettlement = async (
+  groupId: string,
+  data: RecordSettlementRequest
+): Promise<SettlementResponse> => {
+  return api.post<SettlementResponse>(`/balances/${groupId}/settlement`, data);
+};
+
+/**
  * Fetch all group data in parallel.
  * Combines group details, expenses, and balances into a single call.
  */
@@ -296,6 +330,7 @@ export const groupService = {
   getGroupById,
   updateGroup,
   removeMember,
+  recordSettlement,
   getGroupExpenses,
   getGroupBalances,
   getGroupDashboardData,

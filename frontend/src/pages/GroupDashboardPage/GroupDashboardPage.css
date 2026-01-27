@@ -794,19 +794,34 @@
   border-radius: var(--radius-sm);
   padding: var(--space-4);
   text-align: center;
+  margin-bottom: var(--space-4);
 }
 
 .settlement-info p {
   margin: 0;
 }
 
-.settlement-info p:first-child {
-  margin-bottom: var(--space-2);
+.settlement-amount-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-yellow-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
-.settlement-amount {
-  font-size: var(--text-lg);
+.settlement-amount-label {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.settlement-amount-value {
+  font-size: var(--text-xl);
   font-weight: 700;
+  color: var(--color-text);
 }
 
 /* ========================================
