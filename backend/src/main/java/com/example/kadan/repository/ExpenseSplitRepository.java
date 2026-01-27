@@ -64,8 +64,70 @@ public interface ExpenseSplitRepository extends JpaRepository<ExpenseSplit, UUID
         """, nativeQuery = true)
     List<GroupBalance> findGroupBalances(@Param("groupId") UUID groupId);
 
+    @Query(value = """
+        SELECT
+          g.id AS groupId,
+          g.name AS groupName,
+          COALESCE(paid.total_paid, 0) + COALESCE(settled_paid.settlement_paid, 0) AS totalPaid,
+          COALESCE(owed.total_owed, 0) + COALESCE(settled_received.settlement_received, 0) AS totalOwed,
+          (COALESCE(paid.total_paid, 0) + COALESCE(settled_paid.settlement_paid, 0))
+            - (COALESCE(owed.total_owed, 0) + COALESCE(settled_received.settlement_received, 0)) AS netBalance
+        FROM
+          groups g
+        LEFT JOIN (
+            SELECT e.group_id, SUM(es.amount) AS total_paid
+              FROM expense_splits es
+              JOIN expenses e ON es.expense_id = e.id
+             WHERE e.paid_by = :userId
+             GROUP BY e.group_id
+        ) paid ON paid.group_id = g.id
+        LEFT JOIN (
+            SELECT e.group_id, SUM(es.amount) AS total_owed
+              FROM expense_splits es
+              JOIN expenses e ON es.expense_id = e.id
+             WHERE es.user_id = :userId
+             GROUP BY e.group_id
+        ) owed ON owed.group_id = g.id
+        LEFT JOIN (
+            SELECT group_id, SUM(amount) AS settlement_paid
+              FROM settlements
+             WHERE debtor_id = :userId
+             GROUP BY group_id
+        ) settled_paid ON settled_paid.group_id = g.id
+        LEFT JOIN (
+            SELECT group_id, SUM(amount) AS settlement_received
+              FROM settlements
+             WHERE creditor_id = :userId
+             GROUP BY group_id
+        ) settled_received ON settled_received.group_id = g.id
+        WHERE g.id IN (
+            SELECT DISTINCT group_id FROM (
+              SELECT e.group_id
+                FROM expense_splits es
+                JOIN expenses e ON es.expense_id = e.id
+               WHERE es.user_id = :userId
+              UNION
+              SELECT group_id FROM settlements WHERE debtor_id = :userId
+              UNION
+              SELECT group_id FROM settlements WHERE creditor_id = :userId
+              UNION
+              SELECT group_id FROM group_members WHERE user_id = :userId
+            ) AS user_groups
+        )
+        ORDER BY netBalance DESC
+        """, nativeQuery = true)
+    List<UserGroupBalance> findUserBalances(@Param("userId") UUID userId);
+
     interface GroupBalance {
         UUID getUserId();
+        BigDecimal getTotalPaid();
+        BigDecimal getTotalOwed();
+        BigDecimal getNetBalance();
+    }
+
+    interface UserGroupBalance {
+        UUID getGroupId();
+        String getGroupName();
         BigDecimal getTotalPaid();
         BigDecimal getTotalOwed();
         BigDecimal getNetBalance();

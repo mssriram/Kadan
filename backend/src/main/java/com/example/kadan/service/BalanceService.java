@@ -4,7 +4,9 @@ import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.MemberBalanceDto;
 import com.example.kadan.dto.SettlementDto;
 import com.example.kadan.dto.SettlementResponseDto;
+import com.example.kadan.dto.UserGroupBalancesDto;
 import com.example.kadan.dto.enums.DebtStrategy;
+import com.example.kadan.dto.enums.GroupStatus;
 import com.example.kadan.entity.Group;
 import com.example.kadan.entity.Settlement;
 import com.example.kadan.entity.User;
@@ -54,6 +56,11 @@ public class BalanceService {
         List<MemberBalanceDto> memberBalances = MemberBalanceDto.from(members, memberIds);
 
         return new BalanceResponseDto(memberBalances, debts);
+    }
+
+    public List<UserGroupBalancesDto> getAllUserBalances(UUID currentUser) {
+        List<ExpenseSplitRepository.UserGroupBalance> groups = expenseSplitRepository.findUserBalances(currentUser);
+        return groups.stream().map(UserGroupBalancesDto::fromEntity).toList();
     }
 
     public SettlementResponseDto recordSettlement(UUID debtorId, UUID groupId, SettlementDto settlementDto) {
