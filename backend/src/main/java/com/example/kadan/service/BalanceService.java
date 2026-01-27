@@ -45,9 +45,10 @@ public class BalanceService {
         return getBalances(group);
     }
 
+    //TODO implement no new transfers algorithm
     public BalanceResponseDto getBalances(Group group) {
         List<ExpenseSplitRepository.GroupBalance> balances = expenseSplitRepository.findGroupBalances(group.getId());
-        DebtStrategy debtStrategy = group.isSimplifyDebts() ? DebtStrategy.NONEWTRANSFERS : DebtStrategy.MINFLOW;
+        DebtStrategy debtStrategy = group.isSimplifyDebts() ? DebtStrategy.MINFLOW : DebtStrategy.MINFLOW;
         List<Debt> debts = debtCalcFactory.strategy(debtStrategy).calculateDebts(balances);
 
         Map<UUID, ExpenseSplitRepository.GroupBalance> memberIds = balances.stream().collect(Collectors.toMap(ExpenseSplitRepository.GroupBalance::getUserId, balance -> balance));

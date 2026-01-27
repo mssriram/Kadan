@@ -541,7 +541,7 @@ export const GroupDashboardPage: React.FC = () => {
                 <Card title="Settle Up" accent="yellow" className="settlements-card">
                   {debts.length === 0 ? (
                     <div className="settlements-empty">
-                      <p>All settled up! No outstanding debts.</p>
+                      <p style={{ color: 'black' }}>All settled up! No outstanding debts.</p>
                     </div>
                   ) : (
                     <ul className="settlements-list">

@@ -12,6 +12,7 @@ public record GroupResponseDto(
         String name,
         String description,
         String currency,
+        boolean simplifyDebts,
         UserProfileDto created_by,
         List<UserProfileDto> members
 ) {
@@ -31,6 +32,7 @@ public record GroupResponseDto(
                 group.getName(),
                 group.getDescription(),
                 group.getCurrency(),
+                group.isSimplifyDebts(),
                 UserProfileDto.fromEntity(group.getCreatedBy()),
                 members
         );
