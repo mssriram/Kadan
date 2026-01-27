@@ -6,6 +6,7 @@
  */
 
 import { config } from '@/config/environment';
+import { toastEvents } from '@/components/Toast';
 
 // ========================================
 // ERROR TYPES
@@ -103,6 +104,15 @@ const parseErrorResponse = async (response: Response): Promise<ApiError> => {
 };
 
 /**
+ * Handle API error - shows toast and throws exception.
+ */
+const handleApiError = async (response: Response): Promise<never> => {
+    const error = await parseErrorResponse(response);
+    toastEvents.showError();
+    throw new ApiException(error);
+};
+
+/**
  * Make a GET request to the API.
  */
 export const get = async <T>(endpoint: string): Promise<T> => {
@@ -112,8 +122,7 @@ export const get = async <T>(endpoint: string): Promise<T> => {
     });
 
     if (!response.ok) {
-        const error = await parseErrorResponse(response);
-        throw new ApiException(error);
+        return handleApiError(response);
     }
 
     return response.json();
@@ -139,12 +148,12 @@ export const post = async <T>(
     });
 
     if (!response.ok) {
-        const error = await parseErrorResponse(response);
-        throw new ApiException(error);
+        return handleApiError(response);
     }
 
     return response.json();
 };
+
 /**
  * Make a PUT request to the API.
  */
@@ -156,8 +165,7 @@ export const put = async <T>(endpoint: string, body: unknown): Promise<T> => {
     });
 
     if (!response.ok) {
-        const error = await parseErrorResponse(response);
-        throw new ApiException(error);
+        return handleApiError(response);
     }
 
     return response.json();
@@ -174,8 +182,7 @@ export const patch = async <T>(endpoint: string, body: unknown): Promise<T> => {
     });
 
     if (!response.ok) {
-        const error = await parseErrorResponse(response);
-        throw new ApiException(error);
+        return handleApiError(response);
     }
 
     return response.json();
@@ -191,8 +198,7 @@ export const del = async <T>(endpoint: string): Promise<T> => {
     });
 
     if (!response.ok) {
-        const error = await parseErrorResponse(response);
-        throw new ApiException(error);
+        return handleApiError(response);
     }
 
     return response.json();

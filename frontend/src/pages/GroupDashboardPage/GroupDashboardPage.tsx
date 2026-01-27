@@ -64,6 +64,13 @@ export const GroupDashboardPage: React.FC = () => {
 
   // Modal states
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({
+    name: '',
+    description: '',
+    currency: '',
+    simplifyDebts: false,
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
@@ -309,7 +316,15 @@ export const GroupDashboardPage: React.FC = () => {
                   <Button
                     variant="secondary"
                     size="compact"
-                    onClick={() => setIsSettingsModalOpen(true)}
+                    onClick={() => {
+                      setSettingsForm({
+                        name: group.name,
+                        description: group.description || '',
+                        currency: group.currency,
+                        simplifyDebts: group.simplifyDebts ?? false,
+                      });
+                      setIsSettingsModalOpen(true);
+                    }}
                   >
                     ⚙ Settings
                   </Button>
@@ -599,30 +614,74 @@ export const GroupDashboardPage: React.FC = () => {
       >
         <form
           className="modal-form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // TODO: Implement save settings
-            setIsSettingsModalOpen(false);
+            
+            // Build payload with only changed fields
+            const updates: Record<string, string | boolean> = {};
+            if (settingsForm.name !== group.name) {
+              updates.name = settingsForm.name;
+            }
+            if (settingsForm.description !== (group.description || '')) {
+              updates.description = settingsForm.description;
+            }
+            if (settingsForm.currency !== group.currency) {
+              updates.currency = settingsForm.currency;
+            }
+            if (settingsForm.simplifyDebts !== (group.simplifyDebts ?? false)) {
+              updates.simplifyDebts = settingsForm.simplifyDebts;
+            }
+
+            // Skip API call if nothing changed
+            if (Object.keys(updates).length === 0) {
+              setIsSettingsModalOpen(false);
+              return;
+            }
+
+            setIsSavingSettings(true);
+            try {
+              const updatedGroup = await groupService.updateGroup(group.id, updates);
+              setGroup(updatedGroup);
+              setIsSettingsModalOpen(false);
+            } catch (err) {
+              console.error('Failed to update group:', err);
+              // TODO: Show error toast
+            } finally {
+              setIsSavingSettings(false);
+            }
           }}
         >
           <div className="form-group">
             <label htmlFor="group-name">Name</label>
-            <Input id="group-name" defaultValue={group.name} />
+            <Input
+              id="group-name"
+              value={settingsForm.name}
+              onChange={(e) => setSettingsForm((prev) => ({ ...prev, name: e.target.value }))}
+            />
           </div>
           <div className="form-group">
             <label htmlFor="group-description">Description</label>
-            <Input id="group-description" defaultValue={group.description || ''} />
+            <Input
+              id="group-description"
+              value={settingsForm.description}
+              onChange={(e) => setSettingsForm((prev) => ({ ...prev, description: e.target.value }))}
+            />
           </div>
           <div className="form-group">
             <label htmlFor="group-currency">Currency</label>
-            <Input id="group-currency" defaultValue={group.currency} />
+            <Input
+              id="group-currency"
+              value={settingsForm.currency}
+              onChange={(e) => setSettingsForm((prev) => ({ ...prev, currency: e.target.value }))}
+            />
           </div>
           <div className="form-group form-group--checkbox">
             <label htmlFor="group-simplify-debts" className="checkbox-label">
               <input
                 type="checkbox"
                 id="group-simplify-debts"
-                defaultChecked={group.simplifyDebts ?? false}
+                checked={settingsForm.simplifyDebts}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, simplifyDebts: e.target.checked }))}
               />
               <span>Simplify debts</span>
             </label>
@@ -640,8 +699,8 @@ export const GroupDashboardPage: React.FC = () => {
             >
               Delete
             </Button>
-            <Button type="submit" variant="primary">
-              Save Changes
+            <Button type="submit" variant="primary" disabled={isSavingSettings}>
+              {isSavingSettings ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>

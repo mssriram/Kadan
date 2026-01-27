@@ -206,6 +206,21 @@ const transformBalancesResponse = (apiBalances: ApiBalancesResponse): GroupBalan
 });
 
 // ========================================
+// REQUEST TYPES
+// ========================================
+
+/**
+ * Request body for updating a group.
+ * All fields are optional - only provided fields will be updated.
+ */
+export interface UpdateGroupRequest {
+  name?: string;
+  description?: string;
+  currency?: string;
+  simplifyDebts?: boolean;
+}
+
+// ========================================
 // API FUNCTIONS
 // ========================================
 
@@ -215,6 +230,15 @@ const transformBalancesResponse = (apiBalances: ApiBalancesResponse): GroupBalan
  */
 export const getGroupById = async (groupId: string): Promise<GroupDetail> => {
   const response = await api.get<ApiGroupResponse>(`/groups/${groupId}`);
+  return transformGroupResponse(response);
+};
+
+/**
+ * Update group details.
+ * PATCH /api/groups/{groupId}
+ */
+export const updateGroup = async (groupId: string, data: UpdateGroupRequest): Promise<GroupDetail> => {
+  const response = await api.patch<ApiGroupResponse>(`/groups/${groupId}`, data);
   return transformGroupResponse(response);
 };
 
@@ -260,6 +284,7 @@ export const getGroupDashboardData = async (groupId: string): Promise<{
 
 export const groupService = {
   getGroupById,
+  updateGroup,
   getGroupExpenses,
   getGroupBalances,
   getGroupDashboardData,

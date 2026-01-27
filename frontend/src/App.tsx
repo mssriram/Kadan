@@ -7,13 +7,19 @@
 
 import React from 'react';
 import { AppRouter } from '@/router';
+import { Toast } from '@/components/Toast';
 
 /**
  * Main App component.
  * Wraps the application with providers and global configuration.
  */
 const App: React.FC = () => {
-  return <AppRouter />;
+  return (
+    <>
+      <AppRouter />
+      <Toast />
+    </>
+  );
 };
 
 export default App;
