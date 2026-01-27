@@ -12,231 +12,49 @@
  * APIs:
  * - GET /api/groups/{groupId} - Group details + members
  * - GET /api/groups/{groupId}/expenses - Expenses list
- * - GET /api/groups/{groupId}/balances - Balances + debts
+ * - GET /api/balances/{groupId} - Balances + debts
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, Badge, Modal, Input, UserMenu, Select, ProfileModal } from '@/components';
+import { Card, Button, Badge, Modal, Input, UserMenu, Select, ProfileModal, DatePicker } from '@/components';
 import { authService } from '@/services/authService';
+import { groupService, ApiException, type GroupDetail } from '@/services';
 import { config } from '@/config/environment';
-import type { User, GroupMember, Expense, MemberBalance, Debt } from '@/types';
+import type { GroupMember, Expense, MemberBalance, Debt } from '@/types';
 import './GroupDashboardPage.css';
 
-// ========================================
-// API RESPONSE TYPES
-// ========================================
-
-/** Group details from GET /api/groups/{groupId} */
-interface GroupDetailResponse {
-  id: string;
-  name: string;
-  description?: string;
-  currency: string;
-  simplifyDebts?: boolean;
-  createdBy: User;
-  members: GroupMember[];
-}
-
-/** Balances response from GET /api/groups/{groupId}/balances */
-interface BalancesResponse {
-  balances: MemberBalance[];
-  debts: Debt[];
-}
-
-// ========================================
-// MOCK DATA (temporary until API integration)
-// ========================================
-
-const mockGroupDetail: GroupDetailResponse = {
-  id: 'group-001',
-  name: 'Trip to Goa',
-  description: 'Beach vacation with friends',
-  currency: 'INR',
-  simplifyDebts: true,
-  createdBy: {
-    id: '550e8400-e29b-41d4-a716-446655440000',
-    email: 'john@example.com',
-    displayName: 'John Doe',
-    defaultCurrency: 'INR',
-    status: 'ACTIVE',
-  },
-  members: [
-    {
-      user: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'john@example.com',
-        displayName: 'John Doe',
-        defaultCurrency: 'INR',
-        status: 'ACTIVE',
-      },
-      role: 'OWNER',
-    },
-    {
-      user: {
-        id: '660e8400-e29b-41d4-a716-446655440001',
-        email: 'jane@example.com',
-        displayName: 'Jane Smith',
-        defaultCurrency: 'INR',
-        status: 'ACTIVE',
-      },
-      role: 'MEMBER',
-    },
-    {
-      user: {
-        id: '770e8400-e29b-41d4-a716-446655440002',
-        email: 'bob@example.com',
-        displayName: 'Bob Wilson',
-        defaultCurrency: 'INR',
-        status: 'ACTIVE',
-      },
-      role: 'MEMBER',
-    },
-  ],
-};
-
-const mockExpenses: Expense[] = [
-  {
-    id: 'expense-001',
-    groupId: 'group-001',
-    currency: 'INR',
-    description: 'Dinner at Beach Shack',
-    amount: 3000,
-    date: '2026-01-14',
-    splitType: 'EQUAL',
-    paidBy: mockGroupDetail.members[0].user,
-    shares: [
-      { id: 'share-001', userId: mockGroupDetail.members[0].user.id, userName: 'John Doe', amount: 1000, isSettled: true },
-      { id: 'share-002', userId: mockGroupDetail.members[1].user.id, userName: 'Jane Smith', amount: 1000, isSettled: false },
-      { id: 'share-003', userId: mockGroupDetail.members[2].user.id, userName: 'Bob Wilson', amount: 1000, isSettled: false },
-    ],
-    createdAt: '2026-01-14T12:00:00Z',
-    updatedAt: '2026-01-14T12:00:00Z',
-  },
-  {
-    id: 'expense-002',
-    groupId: 'group-001',
-    currency: 'INR',
-    description: 'Hotel Booking',
-    amount: 12000,
-    date: '2026-01-13',
-    splitType: 'EQUAL',
-    paidBy: mockGroupDetail.members[1].user,
-    shares: [
-      { id: 'share-004', userId: mockGroupDetail.members[0].user.id, userName: 'John Doe', amount: 4000, isSettled: false },
-      { id: 'share-005', userId: mockGroupDetail.members[1].user.id, userName: 'Jane Smith', amount: 4000, isSettled: true },
-      { id: 'share-006', userId: mockGroupDetail.members[2].user.id, userName: 'Bob Wilson', amount: 4000, isSettled: false },
-    ],
-    createdAt: '2026-01-13T10:00:00Z',
-    updatedAt: '2026-01-13T10:00:00Z',
-  },
-  {
-    id: 'expense-003',
-    groupId: 'group-001',
-    currency: 'INR',
-    description: 'Cab to Airport',
-    amount: 1500,
-    date: '2026-01-12',
-    splitType: 'EQUAL',
-    paidBy: mockGroupDetail.members[2].user,
-    shares: [
-      { id: 'share-007', userId: mockGroupDetail.members[0].user.id, userName: 'John Doe', amount: 500, isSettled: false },
-      { id: 'share-008', userId: mockGroupDetail.members[1].user.id, userName: 'Jane Smith', amount: 500, isSettled: false },
-      { id: 'share-009', userId: mockGroupDetail.members[2].user.id, userName: 'Bob Wilson', amount: 500, isSettled: true },
-    ],
-    createdAt: '2026-01-12T08:00:00Z',
-    updatedAt: '2026-01-12T08:00:00Z',
-  },
-];
-
-const mockBalancesResponse: BalancesResponse = {
-  balances: [
-    {
-      id: mockGroupDetail.members[0].user.id,
-      name: 'John Doe',
-      paid: 3000,
-      owed: 5500,
-      netBalance: -2500,
-    },
-    {
-      id: mockGroupDetail.members[1].user.id,
-      name: 'Jane Smith',
-      paid: 12000,
-      owed: 5500,
-      netBalance: 6500,
-    },
-    {
-      id: mockGroupDetail.members[2].user.id,
-      name: 'Bob Wilson',
-      paid: 1500,
-      owed: 5500,
-      netBalance: -4000,
-    },
-  ],
-  debts: [
-    {
-      debtor: mockGroupDetail.members[0].user.id,
-      creditor: mockGroupDetail.members[1].user.id,
-      amount: 2500,
-    },
-    {
-      debtor: mockGroupDetail.members[2].user.id,
-      creditor: mockGroupDetail.members[1].user.id,
-      amount: 4000,
-    },
-  ],
-};
-
-// ========================================
-// HELPERS
-// ========================================
-
-/**
- * Format currency amount for display.
- */
-const formatCurrency = (amount: number, currency = 'INR'): string => {
-  return new Intl.NumberFormat('en-IN', {
+// Helpers
+const formatCurrency = (amount: number, currency = 'INR'): string =>
+  new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
-};
 
-/**
- * Format date for display.
- */
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-};
+const formatDate = (dateStr: string): string =>
+  new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
-/**
- * Get user name by ID from member list.
- */
-const getUserName = (userId: string, members: GroupMember[]): string => {
-  const member = members.find((m) => m.user.id === userId);
-  return member?.user.displayName || 'Unknown';
-};
+const getUserName = (userId: string, members: GroupMember[]): string =>
+  members.find((m) => m.user.id === userId)?.user.displayName || 'Unknown';
 
-// ========================================
-// COMPONENT
-// ========================================
+// Constants
+const SPLIT_TYPE_OPTIONS = [
+  { value: 'EQUAL', label: 'Equal split' },
+  { value: 'EXACT', label: 'Exact amounts' },
+  { value: 'PERCENTAGE', label: 'By percentage' },
+];
+
+type TabType = 'expenses' | 'members' | 'debts';
 
 export const GroupDashboardPage: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser()!;
 
-  // Tab type
-  type TabType = 'expenses' | 'members' | 'debts';
-
   // State
-  const [group, setGroup] = useState<GroupDetailResponse | null>(null);
+  const [group, setGroup] = useState<GroupDetail | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<MemberBalance[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -264,54 +82,51 @@ export const GroupDashboardPage: React.FC = () => {
     memberAmounts: {} as Record<string, string>, // For EXACT: actual amounts, for PERCENTAGE: percentage values
   });
 
-  /**
-   * Fetch group data on mount
-   */
-  useEffect(() => {
-    const fetchGroupData = async () => {
-      if (!groupId) return;
+  const fetchGroupData = useCallback(async () => {
+    if (!groupId) return;
 
-      setIsLoading(true);
-      setError(null);
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        // For now, use mock data
-        // TODO: Replace with actual API calls:
-        // const [groupData, expensesData, balancesData] = await Promise.all([
-        //   api.get<GroupDetailResponse>(`/groups/${groupId}`),
-        //   api.get<Expense[]>(`/groups/${groupId}/expenses`),
-        //   api.get<BalancesResponse>(`/groups/${groupId}/balances`),
-        // ]);
+    try {
+      // Fetch all group data in parallel
+      const { group: groupData, expenses: expensesData, balances: balancesData } = 
+        await groupService.getGroupDashboardData(groupId);
 
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        setGroup(mockGroupDetail);
-        setExpenses(mockExpenses);
-        setBalances(mockBalancesResponse.balances);
-        setDebts(mockBalancesResponse.debts);
-      } catch (err) {
-        console.error('Failed to fetch group data:', err);
+      setGroup(groupData);
+      setExpenses(expensesData);
+      setBalances(balancesData.balances);
+      setDebts(balancesData.debts);
+    } catch (err) {
+      console.error('Failed to fetch group data:', err);
+      if (err instanceof ApiException) {
+        if (err.status === 404) {
+          setError('Group not found or you are not a member.');
+        } else if (err.status === 401) {
+          // Token expired, redirect to login
+          authService.logout();
+          navigate('/login');
+          return;
+        } else {
+          setError(err.message || 'Failed to load group data.');
+        }
+      } else {
         setError('Failed to load group data. Please try again.');
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [groupId, navigate]);
 
+  useEffect(() => {
     fetchGroupData();
-  }, [groupId]);
+  }, [fetchGroupData]);
 
-  /**
-   * Handle logout
-   */
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  /**
-   * Open expense modal for adding new expense
-   */
   const handleAddExpense = () => {
     setSelectedExpense(null);
     const memberIds = group?.members.map((m) => m.user.id) || [];
@@ -327,18 +142,15 @@ export const GroupDashboardPage: React.FC = () => {
     setIsExpenseModalOpen(true);
   };
 
-  /**
-   * Open expense modal for viewing/editing existing expense
-   */
   const handleViewExpense = (expense: Expense) => {
     setSelectedExpense(expense);
     // Build memberAmounts from existing shares
     const memberAmounts: Record<string, string> = {};
     expense.shares.forEach((share) => {
       if (expense.splitType === 'PERCENTAGE') {
-        // Calculate percentage from amount
-        const pct = expense.amount > 0 ? (share.amount / expense.amount) * 100 : 0;
-        memberAmounts[share.userId] = pct.toFixed(0);
+        // Calculate percentage from amount: (share.amount * 100) / total with 2 decimal accuracy
+        const pct = expense.amount > 0 ? (share.amount * 100) / expense.amount : 0;
+        memberAmounts[share.userId] = pct.toFixed(2);
       } else {
         memberAmounts[share.userId] = share.amount.toString();
       }
@@ -355,17 +167,11 @@ export const GroupDashboardPage: React.FC = () => {
     setIsExpenseModalOpen(true);
   };
 
-  /**
-   * Close expense modal
-   */
   const handleCloseExpenseModal = () => {
     setIsExpenseModalOpen(false);
     setSelectedExpense(null);
   };
 
-  /**
-   * Toggle member selection in expense form
-   */
   const toggleMemberSelection = (memberId: string) => {
     setExpenseForm((prev) => {
       const isRemoving = prev.selectedMembers.includes(memberId);
@@ -387,22 +193,12 @@ export const GroupDashboardPage: React.FC = () => {
     });
   };
 
-  /**
-   * Update member amount/percentage
-   */
-  const updateMemberAmount = (memberId: string, value: string) => {
+  const updateMemberAmount = (memberId: string, value: string) =>
     setExpenseForm((prev) => ({
       ...prev,
-      memberAmounts: {
-        ...prev.memberAmounts,
-        [memberId]: value,
-      },
+      memberAmounts: { ...prev.memberAmounts, [memberId]: value },
     }));
-  };
 
-  /**
-   * Get display amount for a member based on split type
-   */
   const getMemberDisplayAmount = (memberId: string): number => {
     const totalAmount = parseFloat(expenseForm.amount) || 0;
     const isSelected = expenseForm.selectedMembers.includes(memberId);
@@ -411,7 +207,8 @@ export const GroupDashboardPage: React.FC = () => {
     
     if (expenseForm.splitType === 'EQUAL') {
       const memberCount = expenseForm.selectedMembers.length;
-      return memberCount > 0 ? totalAmount / memberCount : 0;
+      // Round down to 2 decimal places for equal splits
+      return memberCount > 0 ? Math.floor((totalAmount / memberCount) * 100) / 100 : 0;
     } else if (expenseForm.splitType === 'EXACT') {
       return parseFloat(expenseForm.memberAmounts[memberId]) || 0;
     } else if (expenseForm.splitType === 'PERCENTAGE') {
@@ -421,16 +218,6 @@ export const GroupDashboardPage: React.FC = () => {
     return 0;
   };
 
-  /**
-   * Get input value for member (amount or percentage)
-   */
-  const getMemberInputValue = (memberId: string): string => {
-    return expenseForm.memberAmounts[memberId] || '';
-  };
-
-  /**
-   * Memoized options for "Who paid" dropdown
-   */
   const payerOptions = useMemo(() => {
     if (!group) return [];
     return group.members.map((member) => ({
@@ -444,33 +231,12 @@ export const GroupDashboardPage: React.FC = () => {
     }));
   }, [group, currentUser.id]);
 
-  /**
-   * Split type options
-   */
-  const splitTypeOptions = [
-    { value: 'EQUAL', label: 'Equal split' },
-    { value: 'EXACT', label: 'Exact amounts' },
-    { value: 'PERCENTAGE', label: 'By percentage' },
-  ];
-
-  /**
-   * Handle settle debt action
-   */
   const handleSettleDebt = (debt: Debt) => {
     setSelectedDebt(debt);
     setIsSettlementModalOpen(true);
   };
 
-  /**
-   * Check if current user is the owner of this group
-   */
-  const isOwner = group?.members.some(
-    (m) => m.user.id === currentUser.id && m.role === 'OWNER'
-  );
-
-  /**
-   * Get current user's balance in this group
-   */
+  const isOwner = group?.members.some((m) => m.user.id === currentUser.id && m.role === 'OWNER');
   const currentUserBalance = balances.find((b) => b.id === currentUser.id);
 
   if (isLoading) {
@@ -504,17 +270,10 @@ export const GroupDashboardPage: React.FC = () => {
       <header className="group-dashboard-header">
         <div className="container">
           <div className="group-dashboard-header__content">
-            {/* Back link and logo */}
-            <div className="group-dashboard-header__left">
-              <Link to="/app/groups" className="group-dashboard-header__back">
-                ← Back
-              </Link>
-              <Link to="/app/groups" className="group-dashboard-header__logo-link">
-                <h1 className="group-dashboard-header__title">{config.appName}</h1>
-              </Link>
-            </div>
+            <Link to="/app/groups" className="group-dashboard-header__logo-link">
+              <h1 className="group-dashboard-header__title">{config.appName}</h1>
+            </Link>
 
-            {/* User menu */}
             <UserMenu
               displayName={currentUser.displayName}
               onLogout={handleLogout}
@@ -715,8 +474,7 @@ export const GroupDashboardPage: React.FC = () => {
                               variant="danger"
                               size="compact"
                               onClick={() => {
-                                // TODO: Implement remove member
-                                console.log('Remove member:', member.user.id);
+                                // TODO: Implement remove member API
                               }}
                             >
                               Delete
@@ -744,38 +502,36 @@ export const GroupDashboardPage: React.FC = () => {
                   <ul className="balances-list">
                     {balances.map((balance) => (
                       <li key={balance.id} className="balance-item">
-                        <span className="balance-item__name">
-                          {balance.name}
-                          {balance.id === currentUser.id && (
-                            <Badge variant="yellow" size="small">
-                              You
-                            </Badge>
-                          )}
-                        </span>
-                        <div className="balance-item__values">
-                          <span className="balance-item__paid">
-                            Paid: {formatCurrency(balance.paid, group.currency)}
+                        <div className="balance-item__left">
+                          <span className="balance-item__name">
+                            {balance.name}
+                            {balance.id === currentUser.id && (
+                              <Badge variant="yellow" size="small">
+                                You
+                              </Badge>
+                            )}
                           </span>
-                          <span className="balance-item__owed">
-                            Owed: {formatCurrency(balance.owed, group.currency)}
-                          </span>
-                          <span
-                            className={`balance-item__net money ${
-                              balance.netBalance < 0
-                                ? 'balance-item__net--negative'
-                                : balance.netBalance > 0
-                                ? 'balance-item__net--positive'
-                                : ''
-                            }`}
-                          >
-                            {balance.netBalance > 0
-                              ? '+'
-                              : balance.netBalance < 0
-                              ? ''
-                              : ''}
-                            {formatCurrency(balance.netBalance, group.currency)}
-                          </span>
+                          <div className="balance-item__values">
+                            <span className="balance-item__paid">
+                              Paid: {formatCurrency(balance.paid, group.currency)}
+                            </span>
+                            <span className="balance-item__owed">
+                              Owed: {formatCurrency(balance.owed, group.currency)}
+                            </span>
+                          </div>
                         </div>
+                        <span
+                          className={`balance-item__net money ${
+                            balance.netBalance < 0
+                              ? 'balance-item__net--negative'
+                              : balance.netBalance > 0
+                              ? 'balance-item__net--positive'
+                              : ''
+                          }`}
+                        >
+                          {balance.netBalance > 0 ? '+' : ''}
+                          {formatCurrency(balance.netBalance, group.currency)}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -861,9 +617,28 @@ export const GroupDashboardPage: React.FC = () => {
             <label htmlFor="group-currency">Currency</label>
             <Input id="group-currency" defaultValue={group.currency} />
           </div>
-          <div className="modal-actions">
-            <Button type="button" variant="secondary" onClick={() => setIsSettingsModalOpen(false)}>
-              Cancel
+          <div className="form-group form-group--checkbox">
+            <label htmlFor="group-simplify-debts" className="checkbox-label">
+              <input
+                type="checkbox"
+                id="group-simplify-debts"
+                defaultChecked={group.simplifyDebts ?? false}
+              />
+              <span>Simplify debts</span>
+            </label>
+            <p className="form-hint">When enabled, the app will reduce the number of transactions needed to settle up.</p>
+          </div>
+          <div className="modal-actions modal-actions--spread">
+            <Button
+              type="button"
+              variant="secondary"
+              className="delete-btn"
+              onClick={() => {
+                // TODO: Implement delete group API
+                setIsSettingsModalOpen(false);
+              }}
+            >
+              Delete
             </Button>
             <Button type="submit" variant="primary">
               Save Changes
@@ -948,7 +723,7 @@ export const GroupDashboardPage: React.FC = () => {
               <label className="expense-modal-label">For whom</label>
               <Select
                 value={expenseForm.splitType}
-                options={splitTypeOptions}
+                options={SPLIT_TYPE_OPTIONS}
                 onChange={(value) => setExpenseForm((prev) => ({ ...prev, splitType: value as 'EQUAL' | 'EXACT' | 'PERCENTAGE' }))}
                 size="compact"
                 className="expense-split-select"
@@ -988,7 +763,7 @@ export const GroupDashboardPage: React.FC = () => {
                             type="number"
                             className="expense-member-amount-input"
                             placeholder="0"
-                            value={getMemberInputValue(member.user.id)}
+                            value={expenseForm.memberAmounts[member.user.id] || ''}
                             onChange={(e) => updateMemberAmount(member.user.id, e.target.value)}
                           />
                           {expenseForm.splitType === 'PERCENTAGE' && (
@@ -1016,10 +791,9 @@ export const GroupDashboardPage: React.FC = () => {
           {/* Date Section */}
           <div className="expense-modal-section">
             <label className="expense-modal-label">Date</label>
-            <Input
-              type="date"
+            <DatePicker
               value={expenseForm.date}
-              onChange={(e) => setExpenseForm((prev) => ({ ...prev, date: e.target.value }))}
+              onChange={(date: string) => setExpenseForm((prev) => ({ ...prev, date }))}
             />
           </div>
 
@@ -1031,8 +805,7 @@ export const GroupDashboardPage: React.FC = () => {
                 variant="secondary"
                 className="expense-delete-btn"
                 onClick={() => {
-                  // TODO: Implement delete expense
-                  console.log('Delete expense:', selectedExpense.id);
+                  // TODO: Implement delete expense API
                   handleCloseExpenseModal();
                 }}
               >

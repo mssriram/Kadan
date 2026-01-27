@@ -767,7 +767,7 @@ Delete an expense.
 ### 6.1 Get Group Balances
 Get all balances and debts within a group.
 
-**Endpoint:** `GET /api/groups/{groupId}/balances`
+**Endpoint:** `GET /api/balances/{groupId}`
 
 **Authentication:** Required
 
@@ -919,7 +919,7 @@ Record a payment/settlement between users in a group.
 | PATCH              | `/api/groups/{groupId}/expenses/{expenseId}` | Update expense              | Yes           |
 | DELETE             | `/api/groups/{groupId}/expenses/{expenseId}` | Delete expense              | Yes           |
 | **Balances**       |                                              |                             |               |
-| GET                | `/api/groups/{groupId}/balances`             | Get group balances          | Yes           |
+| GET                | `/api/balances/{groupId}`                    | Get group balances          | Yes           |
 | **Settlements**    |                                              |                             |               |
 | POST               | `/api/groups/{groupId}/settlement`           | Record settlement           | Yes           |
 

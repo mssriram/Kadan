@@ -368,14 +368,21 @@
 
 .balance-item {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-2) 0;
   border-bottom: 1px dashed var(--color-border);
 }
 
 .balance-item:last-child {
   border-bottom: none;
+}
+
+.balance-item__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .balance-item__name {
@@ -400,6 +407,8 @@
 
 .balance-item__net {
   font-weight: 700;
+  font-size: var(--text-lg);
+  white-space: nowrap;
 }
 
 .balance-item__net--negative {
@@ -643,12 +652,42 @@
   cursor: pointer;
 }
 
+.form-group--checkbox {
+  gap: var(--space-1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
+}
+
+.modal-actions--spread {
+  justify-content: space-between;
 }
 
 /* ========================================
@@ -1035,13 +1074,15 @@
   margin-top: var(--space-2);
 }
 
-.expense-delete-btn {
+.expense-delete-btn,
+.delete-btn {
   flex-shrink: 0;
   color: var(--color-danger) !important;
   border-color: var(--color-danger) !important;
 }
 
-.expense-delete-btn:hover:not(:disabled) {
+.expense-delete-btn:hover:not(:disabled),
+.delete-btn:hover:not(:disabled) {
   background-color: var(--color-danger) !important;
   color: var(--color-paper) !important;
 }
