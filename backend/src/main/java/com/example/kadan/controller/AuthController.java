@@ -26,6 +26,7 @@ public class AuthController {
     private final JwtService jwtService;
 
     //TODO add password validation.
+    //TODO does email as srraim@example accepted?
     @PostMapping("/public/register")
     public ResponseEntity<RegisterUserResponseDto> register(@Valid @RequestBody RegisterUserDto userDto) {
         User newUser = authService.registerUser(userDto);

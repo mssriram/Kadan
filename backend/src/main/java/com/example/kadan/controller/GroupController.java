@@ -54,6 +54,7 @@ public class GroupController {
         return ResponseEntity.ok().build();
     }
 
+    //TODO default simplify debts to false, and initialise group only with owner as member
     @PostMapping
     public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody GroupDto groupDto) {
         CreateGroupResponseDto response = groupService.createGroup(principal.id(), groupDto);

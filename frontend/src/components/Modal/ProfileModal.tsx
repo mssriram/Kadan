@@ -13,6 +13,7 @@ import { Modal } from '@/components/Modal';
 import { Input, Button } from '@/components';
 import { api, ApiException } from '@/services/api';
 import type { User } from '@/types';
+import { validateEmail, validateDisplayName } from '@/utils/validation';
 import './ProfileModal.css';
 
 // ========================================
@@ -52,6 +53,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [defaultCurrency, setDefaultCurrency] = useState('INR');
+
+  const handleFieldChange = (
+    field: string,
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setter(value);
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
+    if (error) {
+      setError(null);
+    }
+  };
 
   const resetForm = () => {
     setOriginalUser(null);
@@ -130,6 +149,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     const request = buildUpdateRequest();
 
+    const nextFieldErrors: Record<string, string> = {};
+
+    if (email.trim()) {
+      const emailResult = validateEmail(email.trim());
+      if (!emailResult.isValid) {
+        nextFieldErrors.email = emailResult.error || 'Invalid email';
+      }
+    }
+
+    if (displayName.trim()) {
+      const nameResult = validateDisplayName(displayName.trim());
+      if (!nameResult.isValid) {
+        nextFieldErrors.displayName = nameResult.error || 'Invalid display name';
+      }
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
     if (Object.keys(request).length === 0) {
       setError('No changes to save.');
       return;
@@ -173,22 +213,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleFieldChange('email', e.target.value, setEmail)}
               error={fieldErrors.email}
               placeholder="you@example.com"
               fullWidth
               required
+              maxLength={255}
             />
 
             <Input
               label="Display Name"
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e) => handleFieldChange('displayName', e.target.value, setDisplayName)}
               error={fieldErrors.displayName}
               placeholder="Your name"
               fullWidth
               required
+              maxLength={100}
             />
 
             <div className="input-wrapper input-wrapper--full-width">

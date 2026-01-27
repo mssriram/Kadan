@@ -30,6 +30,27 @@
   overflow: hidden;
 }
 
+/* Reduce vertical footprint on shorter screens */
+@media (max-height: 800px) {
+  .register-card {
+    transform: scale(0.92);
+    transform-origin: top center;
+  }
+
+  .register-header,
+  .register-form,
+  .register-footer {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+}
+
+@media (max-height: 700px) {
+  .register-card {
+    transform: scale(0.88);
+  }
+}
+
 /* ========================================
    HEADER — Yellow accent (matching Login)
    ======================================== */
