@@ -14,7 +14,7 @@ import {
   Navigate,
   Outlet 
 } from 'react-router-dom';
-import { LoginPage, RegisterPage, DashboardPage } from '@/pages';
+import { LoginPage, RegisterPage, DashboardPage, GroupDashboardPage } from '@/pages';
 import { authService } from '@/services/authService';
 
 /**
@@ -66,8 +66,8 @@ export const AppRouter: React.FC = () => {
         {/* Protected routes (require authentication) */}
         <Route path="/app" element={<ProtectedRoute />}>
           <Route path="groups" element={<DashboardPage />} />
-          {/* TODO: Add group detail route */}
-          <Route path="groups/:groupId" element={<DashboardPage />} />
+          {/* Group detail route */}
+          <Route path="groups/:groupId" element={<GroupDashboardPage />} />
           {/* TODO: Add profile route */}
           <Route path="profile" element={<div>Profile Page (Coming Soon)</div>} />
         </Route>

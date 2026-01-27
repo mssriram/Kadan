@@ -27,6 +27,7 @@
 
 /* Content */
 .modal-content {
+  position: relative;
   background-color: var(--color-paper);
   border: var(--border-width-thick) solid var(--color-ink);
   border-radius: var(--radius-md);
@@ -84,6 +85,17 @@
 .modal-close:focus {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+/* Header without title - just close button */
+.modal-header--no-title {
+  justify-content: flex-end;
+  border-bottom: none;
+  padding: var(--space-2) var(--space-3);
+}
+
+.modal-header--no-title + .modal-body {
+  padding-top: var(--space-2);
 }
 
 /* Body */
