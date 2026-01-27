@@ -20,6 +20,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, Button, Badge, Modal, Input, UserMenu, Select, ProfileModal, DatePicker } from '@/components';
 import { authService } from '@/services/authService';
 import { groupService, ApiException, type GroupDetail } from '@/services';
+import { toastEvents } from '@/components/Toast';
 import { config } from '@/config/environment';
 import type { GroupMember, Expense, MemberBalance, Debt } from '@/types';
 import './GroupDashboardPage.css';
@@ -488,8 +489,23 @@ export const GroupDashboardPage: React.FC = () => {
                             <Button
                               variant="danger"
                               size="compact"
-                              onClick={() => {
-                                // TODO: Implement remove member API
+                              onClick={async () => {
+                                try {
+                                  await groupService.removeMember(group.id, member.user.id);
+                                  // Remove member from local state
+                                  setGroup((prev) => {
+                                    if (!prev) return prev;
+                                    return {
+                                      ...prev,
+                                      members: prev.members.filter((m) => m.user.id !== member.user.id),
+                                    };
+                                  });
+                                } catch (err) {
+                                  if (err instanceof ApiException && err.status === 409) {
+                                    toastEvents.showError('Cannot remove member with unsettled balance.');
+                                  }
+                                  // Other errors already show generic toast via api.ts
+                                }
                               }}
                             >
                               Delete

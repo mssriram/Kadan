@@ -44,10 +44,7 @@ export const Toast: React.FC = () => {
 
   return (
     <div className="toast toast--error" role="alert">
-      <div className="toast__content">
-        <span className="toast__icon">⚠️</span>
-        <span className="toast__message">{message}</span>
-      </div>
+      <span className="toast__message">{message}</span>
       <button
         type="button"
         className="toast__close"

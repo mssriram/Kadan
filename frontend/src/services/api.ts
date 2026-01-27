@@ -191,7 +191,7 @@ export const patch = async <T>(endpoint: string, body: unknown): Promise<T> => {
 /**
  * Make a DELETE request to the API.
  */
-export const del = async <T>(endpoint: string): Promise<T> => {
+export const del = async (endpoint: string): Promise<void> => {
     const response = await fetch(`${config.apiBaseUrl}${endpoint}`, {
         method: 'DELETE',
         headers: buildHeaders(),
@@ -200,8 +200,6 @@ export const del = async <T>(endpoint: string): Promise<T> => {
     if (!response.ok) {
         return handleApiError(response);
     }
-
-    return response.json();
 };
 
 // ========================================
