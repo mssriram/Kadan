@@ -1,0 +1,109 @@
+/**
+ * Design Tokens (CSS Custom Properties)
+ * 
+ * This file defines all design tokens as per the STYLE_GUIDE.md.
+ * - Colors: neutrals, identity accents (yellow/red), supporting accents
+ * - Typography: font stacks and size scale
+ * - Spacing: consistent spacing scale (multiples of 4)
+ * - Borders, shadows, and radii for retro-maximalist look
+ * 
+ * IMPORTANT: Avoid purple and blue hues.
+ */
+
+:root {
+  /* ========================================
+     COLORS — Neutrals (retro "paper + ink")
+     ======================================== */
+  --color-ink: #14110F;
+  --color-paper: #FFF7D6;
+  --color-paper-2: #FFEFB5;
+  --color-border: #14110F;
+  --color-muted-ink: #3A302A;
+
+  /* ========================================
+     COLORS — Identity Accents (yellows/reds)
+     ======================================== */
+  --color-yellow-1: #FFE066;
+  --color-yellow-2: #FFCC00;
+  --color-orange-1: #FF8A3D;
+  --color-red-1: #FF3B30;
+  --color-red-2: #D72638;
+
+  /* ========================================
+     COLORS — Supporting Accents (minimal use)
+     ======================================== */
+  --color-green-1: #2ECC71;
+  --color-green-2: #0EAD69;
+  --color-brown-1: #7A4E2D;
+
+  /* ========================================
+     COLORS — Semantic Mappings
+     ======================================== */
+  --color-bg: var(--color-paper);
+  --color-surface: var(--color-paper-2);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted-ink);
+  --color-primary: var(--color-red-2);
+  --color-primary-contrast: var(--color-paper);
+  --color-accent: var(--color-yellow-2);
+  --color-danger: var(--color-red-1);
+  --color-success: var(--color-green-2);
+  --color-warning: var(--color-orange-1);
+
+  /* ========================================
+     TYPOGRAPHY — Font Stacks
+     ======================================== */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: 'Bungee', Impact, sans-serif;  /* Bold retro font for app title */
+
+  /* ========================================
+     TYPOGRAPHY — Size Scale
+     ======================================== */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  /* ========================================
+     SPACING — Scale (multiples of 4)
+     ======================================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ========================================
+     LAYOUT — Container widths
+     ======================================== */
+  --container-sm: 640px;
+  --container-md: 960px;
+  --container-lg: 1120px;
+
+  /* ========================================
+     BORDERS & RADIUS
+     ======================================== */
+  --border-width: 2px;
+  --border-width-thick: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* ========================================
+     SHADOWS — Chunky retro shadows
+     ======================================== */
+  --shadow-default: 6px 6px 0 0 var(--color-ink);
+  --shadow-hover: 8px 8px 0 0 var(--color-ink);
+  --shadow-pressed: 2px 2px 0 0 var(--color-ink);
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+  --transition-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}

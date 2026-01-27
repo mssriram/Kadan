@@ -1,0 +1,135 @@
+/**
+ * Input Styles
+ * 
+ * Follows STYLE_GUIDE.md specifications:
+ * - Paper background with ink border
+ * - Yellow focus ring (not blue!)
+ * - Error state with red border
+ */
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.input-wrapper--full-width {
+  width: 100%;
+}
+
+/* ========================================
+   LABEL
+   ======================================== */
+
+.input-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ========================================
+   INPUT FIELD
+   ======================================== */
+
+.input-field {
+  height: 44px;
+  padding: 0 var(--space-3);
+  
+  /* Colors */
+  background-color: var(--color-paper);
+  color: var(--color-text);
+  
+  /* Border */
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  
+  /* Typography */
+  font-size: var(--text-md);
+  
+  /* Transitions */
+  transition: 
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.input-field::placeholder {
+  color: var(--color-muted-ink);
+  opacity: 0.7;
+}
+
+/* Focus state: subtle warm brown outline (no blue!) */
+.input-field:focus {
+  border-color: var(--color-brown-1);
+  box-shadow: 0 0 0 2px rgba(122, 78, 45, 0.25);
+}
+
+/* Disabled state */
+.input-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-surface);
+}
+
+/* ========================================
+   ERROR STATE
+   ======================================== */
+
+.input-wrapper--error .input-field {
+  border-color: var(--color-danger);
+}
+
+.input-wrapper--error .input-field:focus {
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.3);
+}
+
+.input-error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+/* ========================================
+   HELPER TEXT
+   ======================================== */
+
+.input-helper {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+   ======================================== */
+
+.input-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Reset button styles */
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  cursor: pointer;
+  
+  /* Styling */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.input-toggle-btn:hover {
+  color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.input-toggle-btn:focus-visible {
+  outline: 2px solid var(--color-brown-1);
+  outline-offset: 1px;
+}
+
+.input-toggle-icon {
+  width: 20px;
+  height: 20px;
+}

@@ -1,0 +1,241 @@
+/**
+ * Dashboard Page Styles
+ * 
+ * Follows STYLE_GUIDE.md specifications:
+ * - Yellow accent for summary cards
+ * - Retro cards with chunky shadows
+ * - Clean layout with proper spacing
+ */
+
+.dashboard-page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.dashboard-header {
+  background-color: var(--color-yellow-1);
+  border-bottom: var(--border-width-thick) solid var(--color-border);
+  padding: var(--space-4) 0;
+}
+
+.dashboard-header__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dashboard-header__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 400;  /* Bungee is already bold */
+  color: var(--color-ink);
+  letter-spacing: 1px;
+}
+
+.dashboard-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dashboard-header__user {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
+
+.dashboard-main {
+  padding: var(--space-6) 0;
+}
+
+/* ========================================
+   SECTION STYLING
+   ======================================== */
+
+.section-title {
+  margin: 0 0 var(--space-4) 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+/* ========================================
+   SUMMARY SECTION
+   ======================================== */
+
+.dashboard-summary {
+  margin-bottom: var(--space-7);
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.summary-card {
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.summary-card__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.summary-card__value {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Negative balance: same card style, but amount text is red */
+.summary-card--negative .summary-card__value {
+  color: var(--color-danger);
+}
+
+/* Positive balance: same card style, but amount text is green */
+.summary-card--positive .summary-card__value {
+  color: var(--color-success);
+}
+
+/* ========================================
+   GROUPS SECTION
+   ======================================== */
+
+.dashboard-groups {
+  margin-bottom: var(--space-6);
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.groups-empty {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+  background-color: var(--color-surface);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.groups-empty p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.groups-empty p:first-child {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+/* ========================================
+   GROUP CARD
+   ======================================== */
+
+.group-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Override card content padding for group cards */
+.group-card .card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.group-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: var(--space-4);
+}
+
+.group-card__info {
+  flex: 1;
+}
+
+.group-card__name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.group-card__description {
+  margin: var(--space-1) 0 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.group-card__meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.group-card__chevron {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  margin-left: var(--space-3);
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 600px) {
+  .dashboard-header__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .group-card__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .group-card__meta {
+    flex-wrap: wrap;
+  }
+}
