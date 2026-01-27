@@ -346,6 +346,16 @@ export const recordSettlement = async (
 };
 
 /**
+ * Delete an expense from a group.
+ * DELETE /api/groups/{groupId}/expenses/{expenseId}
+ * 
+ * @throws ApiException with status 404 if expense or group not found
+ */
+export const deleteExpense = async (groupId: string, expenseId: string): Promise<void> => {
+  await api.delete(`/groups/${groupId}/expenses/${expenseId}`);
+};
+
+/**
  * Delete a group.
  * DELETE /api/groups/{groupId}
  * 
@@ -380,6 +390,7 @@ export const getGroupDashboardData = async (groupId: string): Promise<{
 export const groupService = {
   getGroupById,
   createExpense,
+  deleteExpense,
   updateGroup,
   deleteGroup,
   removeMember,

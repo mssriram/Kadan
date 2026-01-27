@@ -1001,13 +1001,32 @@ export const GroupDashboardPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 className="expense-delete-btn"
-                onClick={() => {
-                  // TODO: Implement delete expense API
-                  handleCloseExpenseModal();
+                onClick={async () => {
+                  if (isSavingExpense) return;
+                  setIsSavingExpense(true);
+                  try {
+                    await groupService.deleteExpense(group.id, selectedExpense.id);
+                    
+                    // Refresh expenses and balances after deleting expense
+                    const [updatedExpenses, updatedBalances] = await Promise.all([
+                      groupService.getGroupExpenses(group.id),
+                      groupService.getGroupBalances(group.id),
+                    ]);
+                    setExpenses(updatedExpenses);
+                    setBalances(updatedBalances.balances);
+                    setDebts(updatedBalances.debts);
+                    
+                    handleCloseExpenseModal();
+                  } catch (err) {
+                    // Errors are handled by global toast in api.ts
+                    console.error('Failed to delete expense:', err);
+                  } finally {
+                    setIsSavingExpense(false);
+                  }
                 }}
                 disabled={isSavingExpense}
               >
-                Delete
+                {isSavingExpense ? 'Deleting...' : 'Delete'}
               </Button>
             )}
             <Button type="submit" variant="primary" fullWidth disabled={isSavingExpense}>
