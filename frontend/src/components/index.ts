@@ -27,3 +27,6 @@ export type { ModalProps } from './Modal';
 
 export { CreateGroupModal } from './Modal/CreateGroupModal';
 export type { CreateGroupModalProps } from './Modal/CreateGroupModal';
+
+export { ProfileModal } from './Modal/ProfileModal';
+export type { ProfileModalProps } from './Modal/ProfileModal';

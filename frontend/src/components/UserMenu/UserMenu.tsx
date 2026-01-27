@@ -6,18 +6,17 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './UserMenu.css';
 
 interface UserMenuProps {
   displayName: string;
   onLogout: () => void;
+  onProfile?: () => void;
 }
 
-export const UserMenu: React.FC<UserMenuProps> = ({ displayName, onLogout }) => {
+export const UserMenu: React.FC<UserMenuProps> = ({ displayName, onLogout, onProfile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,8 +58,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ displayName, onLogout }) => 
 
   const handleProfile = () => {
     setIsOpen(false);
-    // TODO: Navigate to profile page when implemented
-    navigate('/app/profile');
+    onProfile?.();
   };
 
   const handleLogout = () => {

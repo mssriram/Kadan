@@ -15,10 +15,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, Button, UserMenu, CreateGroupModal } from '@/components';
+import { Card, Button, UserMenu, CreateGroupModal, ProfileModal } from '@/components';
 import { authService } from '@/services/authService';
 import { api } from '@/services/api';
 import { config } from '@/config/environment';
+import type { User } from '@/types';
 import './DashboardPage.css';
 
 // ========================================
@@ -68,7 +69,7 @@ const formatCurrency = (amount: number, currency = 'INR'): string => {
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   // User is guaranteed to exist because ProtectedRoute checks auth
-  const user = authService.getCurrentUser()!;
+  const [currentUser, setCurrentUser] = useState<User>(authService.getCurrentUser()!);
 
   // State for groups and balances
   const [groups, setGroups] = useState<GroupResponse[]>([]);
@@ -80,6 +81,7 @@ export const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   /**
    * Fetch groups and balances on component mount
@@ -157,8 +159,9 @@ export const DashboardPage: React.FC = () => {
             
             {/* User menu dropdown */}
             <UserMenu 
-              displayName={user.displayName} 
-              onLogout={handleLogout} 
+              displayName={currentUser.displayName} 
+              onLogout={handleLogout}
+              onProfile={() => setIsProfileModalOpen(true)}
             />
           </div>
         </div>
@@ -275,6 +278,13 @@ export const DashboardPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onGroupCreated={handleGroupCreated}
+      />
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onProfileUpdated={(user) => setCurrentUser(user)}
       />
     </div>
   );

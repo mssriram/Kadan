@@ -164,6 +164,24 @@ export const put = async <T>(endpoint: string, body: unknown): Promise<T> => {
 };
 
 /**
+ * Make a PATCH request to the API.
+ */
+export const patch = async <T>(endpoint: string, body: unknown): Promise<T> => {
+    const response = await fetch(`${config.apiBaseUrl}${endpoint}`, {
+        method: 'PATCH',
+        headers: buildHeaders(),
+        body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        const error = await parseErrorResponse(response);
+        throw new ApiException(error);
+    }
+
+    return response.json();
+};
+
+/**
  * Make a DELETE request to the API.
  */
 export const del = async <T>(endpoint: string): Promise<T> => {
@@ -188,6 +206,7 @@ export const api = {
     get,
     post,
     put,
+    patch,
     delete: del,
 };
 

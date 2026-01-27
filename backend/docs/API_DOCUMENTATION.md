@@ -155,7 +155,7 @@ Retrieve authenticated user's profile.
 ### 3.2 Update Current User Profile
 Update authenticated user's profile.
 
-**Endpoint:** `PUT /api/users/me`
+**Endpoint:** `PATCH /api/users/me`
 
 **Authentication:** Required
 

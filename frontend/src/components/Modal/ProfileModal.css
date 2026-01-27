@@ -1,0 +1,37 @@
+/**
+ * Profile Modal Styles
+ */
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.profile-form__error {
+  padding: var(--space-3);
+  background-color: var(--color-danger);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.profile-form__loading {
+  padding: var(--space-4);
+  background-color: var(--color-paper-2);
+  border: var(--border-width) solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.profile-form__actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: flex-end;
+  padding-top: var(--space-5);
+  border-top: var(--border-width) solid var(--color-ink);
+  margin-top: var(--space-2);
+}
