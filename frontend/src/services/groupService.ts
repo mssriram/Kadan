@@ -220,6 +220,28 @@ export interface UpdateGroupRequest {
   simplifyDebts?: boolean;
 }
 
+/**
+ * Member split for expense creation.
+ */
+export interface ExpenseMemberSplit {
+  id: string;
+  share?: number; // Required for EXACT and PERCENTAGE splits
+}
+
+/**
+ * Request body for creating an expense.
+ * POST /api/groups/{groupId}/expenses
+ */
+export interface CreateExpenseRequest {
+  amount: number;
+  date: string; // Format: MM-dd-uuuu (e.g., "01-14-2026")
+  currency?: string;
+  description?: string;
+  paidBy: string; // User ID who paid
+  splitType: 'EQUAL' | 'EXACT' | 'PERCENTAGE';
+  members: ExpenseMemberSplit[];
+}
+
 // ========================================
 // API FUNCTIONS
 // ========================================
@@ -231,6 +253,25 @@ export interface UpdateGroupRequest {
 export const getGroupById = async (groupId: string): Promise<GroupDetail> => {
   const response = await api.get<ApiGroupResponse>(`/groups/${groupId}`);
   return transformGroupResponse(response);
+};
+
+/**
+ * Create a new expense in a group.
+ * POST /api/groups/{groupId}/expenses
+ * 
+ * Date format: The API expects MM-dd-uuuu format (e.g., "01-14-2026")
+ * Frontend date is YYYY-MM-DD, so we need to convert.
+ * 
+ * @throws ApiException with status 400 for validation errors
+ * @throws ApiException with status 403 if user not a member
+ * @throws ApiException with status 404 if group or payer not found
+ */
+export const createExpense = async (
+  groupId: string,
+  data: CreateExpenseRequest
+): Promise<Expense> => {
+  const response = await api.post<ApiExpenseResponse>(`/groups/${groupId}/expenses`, data);
+  return transformExpense(response, groupId);
 };
 
 /**
@@ -338,6 +379,7 @@ export const getGroupDashboardData = async (groupId: string): Promise<{
 
 export const groupService = {
   getGroupById,
+  createExpense,
   updateGroup,
   deleteGroup,
   removeMember,

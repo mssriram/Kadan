@@ -43,10 +43,10 @@ public class ExpenseController {
 
     //TODO update to include scenario where multiple people paid for the same expense
     @PostMapping
-    public ResponseEntity<Void> createExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
+    public ResponseEntity<ExpenseDto> createExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
         ExpenseValidator.validateCreateExpense(request);
-        expenseService.createExpense(principal.id(), groupId, request);
-        return ResponseEntity.ok().build();
+        ExpenseDto response = expenseService.createExpense(principal.id(), groupId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{expenseId}")

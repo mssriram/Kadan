@@ -92,6 +92,7 @@ export const GroupDashboardPage: React.FC = () => {
     memberAmounts: {} as Record<string, string>, // For EXACT: actual amounts, for PERCENTAGE: percentage values
   });
   const [splitError, setSplitError] = useState('');
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
 
   const fetchGroupData = useCallback(async () => {
     if (!groupId) return;
@@ -816,16 +817,77 @@ export const GroupDashboardPage: React.FC = () => {
       >
         <form
           className="expense-modal-form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            
+            // TODO: Implement update expense API - for now, only allow creating new expenses
+            if (selectedExpense) {
+              handleCloseExpenseModal();
+              return;
+            }
+            
             // Validate split before saving
             if (!splitValidation.isValid) {
               setSplitError(splitValidation.message);
               return;
             }
             setSplitError('');
-            // TODO: Implement save expense
-            handleCloseExpenseModal();
+            
+            // Prevent double submission
+            if (isSavingExpense) return;
+            setIsSavingExpense(true);
+            
+            try {
+              // Convert date from YYYY-MM-DD to MM-dd-uuuu format for API
+              const [year, month, day] = expenseForm.date.split('-');
+              const apiDate = `${month}-${day}-${year}`;
+              
+              // Build members array based on split type
+              // Filter out members with 0 amount for EXACT/PERCENTAGE
+              let members: { id: string; share?: number }[];
+              
+              if (expenseForm.splitType === 'EQUAL') {
+                // For EQUAL split, just include selected members
+                members = expenseForm.selectedMembers.map((id) => ({ id }));
+              } else {
+                // For EXACT and PERCENTAGE, include share and filter out 0 amounts
+                members = Object.entries(expenseForm.memberAmounts)
+                  .filter(([, value]) => {
+                    const numValue = parseFloat(value) || 0;
+                    return numValue > 0;
+                  })
+                  .map(([id, value]) => ({
+                    id,
+                    share: parseFloat(value) || 0,
+                  }));
+              }
+              
+              await groupService.createExpense(group.id, {
+                amount: parseFloat(expenseForm.amount) || 0,
+                date: apiDate,
+                currency: group.currency,
+                description: expenseForm.description || undefined,
+                paidBy: expenseForm.paidById,
+                splitType: expenseForm.splitType,
+                members,
+              });
+              
+              // Refresh expenses and balances after creating expense
+              const [updatedExpenses, updatedBalances] = await Promise.all([
+                groupService.getGroupExpenses(group.id),
+                groupService.getGroupBalances(group.id),
+              ]);
+              setExpenses(updatedExpenses);
+              setBalances(updatedBalances.balances);
+              setDebts(updatedBalances.debts);
+              
+              handleCloseExpenseModal();
+            } catch (err) {
+              // Errors are handled by global toast in api.ts
+              console.error('Failed to create expense:', err);
+            } finally {
+              setIsSavingExpense(false);
+            }
           }}
         >
           {/* Who Paid Section */}
@@ -943,12 +1005,13 @@ export const GroupDashboardPage: React.FC = () => {
                   // TODO: Implement delete expense API
                   handleCloseExpenseModal();
                 }}
+                disabled={isSavingExpense}
               >
                 Delete
               </Button>
             )}
-            <Button type="submit" variant="primary" fullWidth>
-              Save
+            <Button type="submit" variant="primary" fullWidth disabled={isSavingExpense}>
+              {isSavingExpense ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>
