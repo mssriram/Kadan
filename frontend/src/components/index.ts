@@ -21,3 +21,9 @@ export { PasswordRequirements } from './PasswordRequirements';
 export type { PasswordRequirementsProps } from './PasswordRequirements';
 
 export { UserMenu } from './UserMenu';
+
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';
+
+export { CreateGroupModal } from './Modal/CreateGroupModal';
+export type { CreateGroupModalProps } from './Modal/CreateGroupModal';

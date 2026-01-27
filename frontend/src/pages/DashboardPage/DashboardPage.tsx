@@ -8,19 +8,45 @@
  * 
  * Route: /app/groups
  * 
- * TODO: Integrate with GET /api/groups and balance aggregation when connecting to backend
+ * APIs:
+ * - GET /api/groups - Fetches user's groups
+ * - GET /api/balances - Fetches balance summary per group
  */
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, Badge, Button, UserMenu } from '@/components';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Card, Button, UserMenu, CreateGroupModal } from '@/components';
 import { authService } from '@/services/authService';
-import { 
-  mockGroups, 
-  mockDashboardStats 
-} from '@/data/mockData';
+import { api } from '@/services/api';
 import { config } from '@/config/environment';
 import './DashboardPage.css';
+
+// ========================================
+// API RESPONSE TYPES
+// ========================================
+
+/** Group item from GET /api/groups */
+interface GroupResponse {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/** Balance item from GET /api/balances */
+interface BalanceResponse {
+  groupId: string;
+  groupName: string;
+  paid: number;
+  owed: number;
+  netBalance: number;
+}
+
+/** Aggregated dashboard stats */
+interface DashboardStats {
+  totalPaid: number;
+  totalOwed: number;
+  netBalance: number;
+}
 
 /**
  * Format currency amount for display.
@@ -37,14 +63,61 @@ const formatCurrency = (amount: number, currency = 'INR'): string => {
 
 /**
  * DashboardPage displays the user's groups and overall balance summary.
- * Uses real user data from login, with mock data for groups/stats.
+ * Fetches data from /api/groups and /api/balances endpoints.
  */
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   // User is guaranteed to exist because ProtectedRoute checks auth
   const user = authService.getCurrentUser()!;
-  const stats = mockDashboardStats;
-  const groups = mockGroups;
+
+  // State for groups and balances
+  const [groups, setGroups] = useState<GroupResponse[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalPaid: 0,
+    totalOwed: 0,
+    netBalance: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  /**
+   * Fetch groups and balances on component mount
+   */
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Fetch groups and balances in parallel
+        const [groupsData, balancesData] = await Promise.all([
+          api.get<GroupResponse[]>('/groups'),
+          api.get<BalanceResponse[]>('/balances'),
+        ]);
+
+        setGroups(groupsData);
+
+        // Aggregate balance stats
+        const aggregatedStats = balancesData.reduce(
+          (acc, balance) => ({
+            totalPaid: acc.totalPaid + balance.paid,
+            totalOwed: acc.totalOwed + balance.owed,
+            netBalance: acc.netBalance + balance.netBalance,
+          }),
+          { totalPaid: 0, totalOwed: 0, netBalance: 0 }
+        );
+        setStats(aggregatedStats);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   /**
    * Handle group card click - navigate to group details
@@ -61,6 +134,14 @@ export const DashboardPage: React.FC = () => {
     navigate('/login');
   };
 
+  /**
+   * Handle successful group creation - navigate to the new group
+   */
+  const handleGroupCreated = (groupId: string) => {
+    setIsCreateModalOpen(false);
+    navigate(`/app/groups/${groupId}`);
+  };
+
   return (
     <div className="dashboard-page">
       {/* ========================================
@@ -70,7 +151,9 @@ export const DashboardPage: React.FC = () => {
         <div className="container">
           <div className="dashboard-header__content">
             {/* Logo/Title */}
-            <h1 className="dashboard-header__title">{config.appName}</h1>
+            <Link to="/app/groups" className="dashboard-header__logo-link">
+              <h1 className="dashboard-header__title">{config.appName}</h1>
+            </Link>
             
             {/* User menu dropdown */}
             <UserMenu 
@@ -86,6 +169,26 @@ export const DashboardPage: React.FC = () => {
           ======================================== */}
       <main className="dashboard-main">
         <div className="container">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="dashboard-loading">
+              <p>Loading your dashboard...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="dashboard-error">
+              <p>{error}</p>
+              <Button variant="secondary" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {/* Content (only show when not loading and no error) */}
+          {!isLoading && !error && (
+            <>
           {/* ========================================
               SUMMARY SECTION
               ======================================== */}
@@ -93,27 +196,27 @@ export const DashboardPage: React.FC = () => {
             <h2 className="section-title">Your Summary</h2>
             
             <div className="summary-cards">
-              {/* Total Paid */}
+              {/* You Paid */}
               <div className="summary-card">
-                <span className="summary-card__label">Total Paid</span>
+                <span className="summary-card__label">You Paid</span>
                 <span className="summary-card__value money">
                   {formatCurrency(stats.totalPaid)}
                 </span>
               </div>
 
-              {/* Total Owed */}
+              {/* You Owe */}
               <div className="summary-card">
-                <span className="summary-card__label">Total Owed</span>
+                <span className="summary-card__label">You Owe</span>
                 <span className="summary-card__value money">
                   {formatCurrency(stats.totalOwed)}
                 </span>
               </div>
 
               {/* Net Balance */}
-              <div className={`summary-card ${stats.netBalance < 0 ? 'summary-card--negative' : 'summary-card--positive'}`}>
+              <div className={`summary-card ${stats.netBalance < 0 ? 'summary-card--negative' : stats.netBalance > 0 ? 'summary-card--positive' : ''}`}>
                 <span className="summary-card__label">Balance</span>
                 <span className="summary-card__value money">
-                  {formatCurrency(Math.abs(stats.netBalance))}
+                  {stats.netBalance > 0 ? '+' : stats.netBalance < 0 ? '-' : ''}{formatCurrency(Math.abs(stats.netBalance))}
                 </span>
               </div>
             </div>
@@ -125,7 +228,7 @@ export const DashboardPage: React.FC = () => {
           <section className="dashboard-groups">
             <div className="section-header">
               <h2 className="section-title">Your Groups</h2>
-              <Button variant="primary" size="compact">
+              <Button variant="primary" size="compact" onClick={() => setIsCreateModalOpen(true)}>
                 + Create Group
               </Button>
             </div>
@@ -154,24 +257,25 @@ export const DashboardPage: React.FC = () => {
                           </p>
                         )}
                       </div>
-
-                      {/* Show owner badge only if user owns the group */}
-                      {group.createdBy.id === user.id && (
-                        <div className="group-card__meta">
-                          <Badge variant="yellow">Owner</Badge>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Chevron indicator */}
-                    <span className="group-card__chevron">→</span>
+                    <span className="group-card__chevron">➜</span>
                   </Card>
                 ))}
               </div>
             )}
           </section>
+            </>
+          )}
         </div>
       </main>
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onGroupCreated={handleGroupCreated}
+      />
     </div>
   );
 };
