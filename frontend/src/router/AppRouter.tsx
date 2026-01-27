@@ -54,8 +54,10 @@ export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Default redirect - go to groups if authenticated, else login */}
+        <Route path="/" element={
+          isAuthenticated() ? <Navigate to="/app/groups" replace /> : <Navigate to="/login" replace />
+        } />
 
         {/* Public routes (redirect if already logged in) */}
         <Route element={<PublicRoute />}>
@@ -72,8 +74,10 @@ export const AppRouter: React.FC = () => {
           <Route path="profile" element={<div>Profile Page (Coming Soon)</div>} />
         </Route>
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Catch-all redirect - go to groups if authenticated, else login */}
+        <Route path="*" element={
+          isAuthenticated() ? <Navigate to="/app/groups" replace /> : <Navigate to="/login" replace />
+        } />
       </Routes>
     </BrowserRouter>
   );

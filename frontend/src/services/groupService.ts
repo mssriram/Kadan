@@ -305,6 +305,16 @@ export const recordSettlement = async (
 };
 
 /**
+ * Delete a group.
+ * DELETE /api/groups/{groupId}
+ * 
+ * @throws ApiException with status 409 if members have non-zero balances
+ */
+export const deleteGroup = async (groupId: string): Promise<void> => {
+  await api.delete(`/groups/${groupId}`);
+};
+
+/**
  * Fetch all group data in parallel.
  * Combines group details, expenses, and balances into a single call.
  */
@@ -329,6 +339,7 @@ export const getGroupDashboardData = async (groupId: string): Promise<{
 export const groupService = {
   getGroupById,
   updateGroup,
+  deleteGroup,
   removeMember,
   recordSettlement,
   getGroupExpenses,

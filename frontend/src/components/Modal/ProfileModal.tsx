@@ -184,9 +184,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       handleClose();
     } catch (err) {
       if (err instanceof ApiException) {
-        setError(err.message);
-        if (err.fieldErrors) {
-          setFieldErrors(err.fieldErrors);
+        if (err.status !== 409) {
+          setError(err.message);
+          if (err.fieldErrors) {
+            setFieldErrors(err.fieldErrors);
+          }
         }
       } else {
         setError('An unexpected error occurred. Please try again.');

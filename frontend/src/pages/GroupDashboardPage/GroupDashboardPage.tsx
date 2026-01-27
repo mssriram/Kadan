@@ -72,6 +72,8 @@ export const GroupDashboardPage: React.FC = () => {
     simplifyDebts: false,
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isDeleteConfirmPending, setIsDeleteConfirmPending] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
@@ -89,6 +91,7 @@ export const GroupDashboardPage: React.FC = () => {
     selectedMembers: [] as string[],
     memberAmounts: {} as Record<string, string>, // For EXACT: actual amounts, for PERCENTAGE: percentage values
   });
+  const [splitError, setSplitError] = useState('');
 
   const fetchGroupData = useCallback(async () => {
     if (!groupId) return;
@@ -137,6 +140,7 @@ export const GroupDashboardPage: React.FC = () => {
 
   const handleAddExpense = () => {
     setSelectedExpense(null);
+    setSplitError('');
     const memberIds = group?.members.map((m) => m.user.id) || [];
     setExpenseForm({
       description: '',
@@ -152,6 +156,7 @@ export const GroupDashboardPage: React.FC = () => {
 
   const handleViewExpense = (expense: Expense) => {
     setSelectedExpense(expense);
+    setSplitError('');
     // Build memberAmounts from existing shares
     const memberAmounts: Record<string, string> = {};
     expense.shares.forEach((share) => {
@@ -178,6 +183,7 @@ export const GroupDashboardPage: React.FC = () => {
   const handleCloseExpenseModal = () => {
     setIsExpenseModalOpen(false);
     setSelectedExpense(null);
+    setSplitError('');
   };
 
   const toggleMemberSelection = (memberId: string) => {
@@ -225,6 +231,34 @@ export const GroupDashboardPage: React.FC = () => {
     }
     return 0;
   };
+
+  // Validation for EXACT and PERCENTAGE split types
+  const splitValidation = useMemo(() => {
+    const totalAmount = parseFloat(expenseForm.amount) || 0;
+    
+    if (expenseForm.splitType === 'EXACT') {
+      const sumOfAmounts = Object.values(expenseForm.memberAmounts)
+        .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      const isValid = Math.abs(totalAmount - sumOfAmounts) < 0.01;
+      return {
+        isValid,
+        message: 'Amounts should sum to total',
+      };
+    }
+    
+    if (expenseForm.splitType === 'PERCENTAGE') {
+      const sumOfPercentages = Object.values(expenseForm.memberAmounts)
+        .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      const isValid = Math.abs(100 - sumOfPercentages) < 0.01;
+      return {
+        isValid,
+        message: 'Percentages should sum to 100',
+      };
+    }
+    
+    // EQUAL split is always valid
+    return { isValid: true, message: '' };
+  }, [expenseForm.splitType, expenseForm.amount, expenseForm.memberAmounts]);
 
   const payerOptions = useMemo(() => {
     if (!group) return [];
@@ -457,7 +491,7 @@ export const GroupDashboardPage: React.FC = () => {
                 <div className="section-header">
                   <h2 className="section-title">Members</h2>
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="compact"
                     onClick={() => setIsAddMemberModalOpen(true)}
                   >
@@ -625,7 +659,10 @@ export const GroupDashboardPage: React.FC = () => {
       {/* Group Settings Modal */}
       <Modal
         isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
+        onClose={() => {
+          setIsSettingsModalOpen(false);
+          setIsDeleteConfirmPending(false);
+        }}
         title="Group Settings"
       >
         <form
@@ -708,12 +745,28 @@ export const GroupDashboardPage: React.FC = () => {
               type="button"
               variant="secondary"
               className="delete-btn"
-              onClick={() => {
-                // TODO: Implement delete group API
-                setIsSettingsModalOpen(false);
+              disabled={isDeletingGroup}
+              onClick={async () => {
+                if (!isDeleteConfirmPending) {
+                  setIsDeleteConfirmPending(true);
+                  return;
+                }
+                
+                setIsDeletingGroup(true);
+                try {
+                  await groupService.deleteGroup(group.id);
+                  navigate('/app/groups');
+                } catch (err) {
+                  if (err instanceof ApiException && err.status === 409) {
+                    toastEvents.showError('Cannot delete group with unsettled balances. Please settle up first.');
+                  }
+                  setIsDeleteConfirmPending(false);
+                } finally {
+                  setIsDeletingGroup(false);
+                }
               }}
             >
-              Delete
+              {isDeletingGroup ? 'Deleting...' : isDeleteConfirmPending ? 'Click again to confirm' : 'Delete'}
             </Button>
             <Button type="submit" variant="primary" disabled={isSavingSettings}>
               {isSavingSettings ? 'Saving...' : 'Save Changes'}
@@ -765,6 +818,12 @@ export const GroupDashboardPage: React.FC = () => {
           className="expense-modal-form"
           onSubmit={(e) => {
             e.preventDefault();
+            // Validate split before saving
+            if (!splitValidation.isValid) {
+              setSplitError(splitValidation.message);
+              return;
+            }
+            setSplitError('');
             // TODO: Implement save expense
             handleCloseExpenseModal();
           }}
@@ -851,6 +910,7 @@ export const GroupDashboardPage: React.FC = () => {
                 );
               })}
             </ul>
+            {splitError && <span className="field-error">{splitError}</span>}
           </div>
 
           {/* Purpose Section */}
