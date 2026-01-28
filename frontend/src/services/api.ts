@@ -69,6 +69,13 @@ const buildHeaders = (includeAuth = true): HeadersInit => {
 };
 
 /**
+ * Extended API error structure for internal parsing.
+ */
+interface ParsedApiError extends ApiError {
+    type?: string;
+}
+
+/**
  * Parse error response from the API.
  * 
  * Known backend error formats:
@@ -76,12 +83,14 @@ const buildHeaders = (includeAuth = true): HeadersInit => {
  * - Auth: { "type": "AUTHENTICATION_ERROR", "message": "..." }
  * - Some errors (e.g., 404) may have no body
  */
-const parseErrorResponse = async (response: Response): Promise<ApiError> => {
+const parseErrorResponse = async (response: Response): Promise<ParsedApiError> => {
     let message = 'An unexpected error occurred';
     let fieldErrors: Record<string, string> | undefined;
+    let type: string | undefined;
 
     try {
         const data = await response.json();
+        type = data.type;
         
         // Handle validation error format
         if (data.type === 'VALIDATION_ERROR' && data.invalidFields) {
@@ -100,14 +109,40 @@ const parseErrorResponse = async (response: Response): Promise<ApiError> => {
         // No JSON body (e.g., 404)
     }
 
-    return { status: response.status, message, fieldErrors };
+    return { status: response.status, message, fieldErrors, type };
+};
+
+/**
+ * Handle authentication error by logging out and redirecting to login.
+ * Only triggers if user was previously authenticated (has stored token).
+ */
+const handleAuthenticationError = (): void => {
+    // Only logout if user was logged in (has a stored token)
+    const hasToken = localStorage.getItem('auth_token');
+    if (!hasToken) {
+        return; // Not logged in, no need to logout/redirect (e.g., login page invalid credentials)
+    }
+    
+    // Clear stored credentials
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('current_user');
+    
+    // Redirect to login page
+    window.location.href = '/login';
 };
 
 /**
  * Handle API error - shows toast and throws exception.
+ * For authentication errors (401 with AUTHENTICATION_ERROR type), logs out and redirects.
  */
 const handleApiError = async (response: Response): Promise<never> => {
     const error = await parseErrorResponse(response);
+    
+    // Handle 401 with AUTHENTICATION_ERROR - logout and redirect
+    if (response.status === 401 && error.type === 'AUTHENTICATION_ERROR') {
+        handleAuthenticationError();
+    }
+    
     toastEvents.showError();
     throw new ApiException(error);
 };
