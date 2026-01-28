@@ -820,12 +820,6 @@ export const GroupDashboardPage: React.FC = () => {
           onSubmit={async (e) => {
             e.preventDefault();
             
-            // TODO: Implement update expense API - for now, only allow creating new expenses
-            if (selectedExpense) {
-              handleCloseExpenseModal();
-              return;
-            }
-            
             // Validate split before saving
             if (!splitValidation.isValid) {
               setSplitError(splitValidation.message);
@@ -862,7 +856,7 @@ export const GroupDashboardPage: React.FC = () => {
                   }));
               }
               
-              await groupService.createExpense(group.id, {
+              const expenseData = {
                 amount: parseFloat(expenseForm.amount) || 0,
                 date: apiDate,
                 currency: group.currency,
@@ -870,9 +864,17 @@ export const GroupDashboardPage: React.FC = () => {
                 paidBy: expenseForm.paidById,
                 splitType: expenseForm.splitType,
                 members,
-              });
+              };
               
-              // Refresh expenses and balances after creating expense
+              if (selectedExpense) {
+                // Update existing expense
+                await groupService.updateExpense(group.id, selectedExpense.id, expenseData);
+              } else {
+                // Create new expense
+                await groupService.createExpense(group.id, expenseData);
+              }
+              
+              // Refresh expenses and balances after creating/updating expense
               const [updatedExpenses, updatedBalances] = await Promise.all([
                 groupService.getGroupExpenses(group.id),
                 groupService.getGroupBalances(group.id),
@@ -884,7 +886,7 @@ export const GroupDashboardPage: React.FC = () => {
               handleCloseExpenseModal();
             } catch (err) {
               // Errors are handled by global toast in api.ts
-              console.error('Failed to create expense:', err);
+              console.error('Failed to save expense:', err);
             } finally {
               setIsSavingExpense(false);
             }

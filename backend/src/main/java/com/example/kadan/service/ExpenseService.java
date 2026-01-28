@@ -98,7 +98,7 @@ public class ExpenseService {
     }
 
     @Transactional
-    public void updateExpense(UUID currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
+    public ExpenseDto updateExpense(UUID currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
@@ -118,7 +118,11 @@ public class ExpenseService {
             expenseSplitRepository.deleteAllByExpense(expense);
             expenseSplitRepository.flush();
             expenseSplitRepository.saveAll(userSplits);
+
+            savedExpense.setExpenseSplits(userSplits);
         }
+
+        return ExpenseDto.fromEntity(savedExpense);
     }
 
     private Map<User, BigDecimal> getExpenseMembers(SplitType splitType, List<MemberSplitDto> members, Group group) {

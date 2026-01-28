@@ -242,6 +242,21 @@ export interface CreateExpenseRequest {
   members: ExpenseMemberSplit[];
 }
 
+/**
+ * Request body for updating an expense.
+ * PATCH /api/groups/{groupId}/expenses/{expenseId}
+ * All fields are optional - only provided fields will be updated.
+ */
+export interface UpdateExpenseRequest {
+  amount?: number;
+  date?: string; // Format: MM-dd-uuuu (e.g., "01-14-2026")
+  currency?: string;
+  description?: string;
+  paidBy?: string; // User ID who paid
+  splitType?: 'EQUAL' | 'EXACT' | 'PERCENTAGE';
+  members?: ExpenseMemberSplit[];
+}
+
 // ========================================
 // API FUNCTIONS
 // ========================================
@@ -271,6 +286,24 @@ export const createExpense = async (
   data: CreateExpenseRequest
 ): Promise<Expense> => {
   const response = await api.post<ApiExpenseResponse>(`/groups/${groupId}/expenses`, data);
+  return transformExpense(response, groupId);
+};
+
+/**
+ * Update an existing expense.
+ * PATCH /api/groups/{groupId}/expenses/{expenseId}
+ * 
+ * Date format: The API expects MM-dd-uuuu format (e.g., "01-14-2026")
+ * 
+ * @throws ApiException with status 400 for validation errors
+ * @throws ApiException with status 404 if expense or group not found
+ */
+export const updateExpense = async (
+  groupId: string,
+  expenseId: string,
+  data: UpdateExpenseRequest
+): Promise<Expense> => {
+  const response = await api.patch<ApiExpenseResponse>(`/groups/${groupId}/expenses/${expenseId}`, data);
   return transformExpense(response, groupId);
 };
 
@@ -390,6 +423,7 @@ export const getGroupDashboardData = async (groupId: string): Promise<{
 export const groupService = {
   getGroupById,
   createExpense,
+  updateExpense,
   deleteExpense,
   updateGroup,
   deleteGroup,

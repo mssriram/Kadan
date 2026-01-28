@@ -50,10 +50,10 @@ public class ExpenseController {
     }
 
     @PatchMapping("/{expenseId}")
-    public ResponseEntity<Void> updateExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
+    public ResponseEntity<ExpenseDto> updateExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
         ExpenseValidator.validateUpdateExpense(request);
-        expenseService.updateExpense(principal.id(), groupId, expenseId, request);
-        return ResponseEntity.ok().build();
+        ExpenseDto response = expenseService.updateExpense(principal.id(), groupId, expenseId, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{expenseId}")
