@@ -77,7 +77,6 @@ public class GroupService {
         return GroupResponseDto.fromEntity(updatedGroup);
     }
 
-    //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
     @Transactional
     public GroupMemberResponseDto addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
@@ -124,6 +123,7 @@ public class GroupService {
 
         return CreateGroupResponseDto.fromEntity(savedGroup);
     }
+
     //TODO If owner is removed, transfer ownership to another member.
     @Transactional
     public void removeMemberFromGroup(UUID currentUser, UUID groupId, UUID memberId) {

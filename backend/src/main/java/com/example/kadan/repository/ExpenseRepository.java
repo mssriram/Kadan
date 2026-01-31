@@ -10,5 +10,5 @@ import java.util.UUID;
 
 public interface ExpenseRepository extends CrudRepository<Expense, UUID> {
 
-    Optional<List<Expense>> findAllByGroup(Group group);
+    Optional<List<Expense>> findAllByGroupOrderByExpenseDateDesc(Group group);
 }

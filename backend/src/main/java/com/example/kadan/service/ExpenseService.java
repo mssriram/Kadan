@@ -46,7 +46,7 @@ public class ExpenseService {
             throw new EntityNotFoundException("Group not found");
         }
 
-        List<Expense> expenses = expenseRepository.findAllByGroup(group).orElseThrow(() -> new EntityNotFoundException("No expenses found for the group"));
+        List<Expense> expenses = expenseRepository.findAllByGroupOrderByExpenseDateDesc(group).orElseThrow(() -> new EntityNotFoundException("No expenses found for the group"));
         return expenses.stream().map(ExpenseDto::fromEntity).toList();
     }
 

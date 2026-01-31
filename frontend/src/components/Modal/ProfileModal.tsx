@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input, Button } from '@/components';
 import { api, ApiException } from '@/services/api';
+import { toastEvents } from '@/components/Toast/toastEvents';
 import type { User } from '@/types';
 import { validateEmail, validateDisplayName } from '@/utils/validation';
 import './ProfileModal.css';
@@ -184,7 +185,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       handleClose();
     } catch (err) {
       if (err instanceof ApiException) {
-        if (err.status !== 409) {
+        if (err.status === 409) {
+          toastEvents.showError('This email is already in use by another account.');
+        } else {
           setError(err.message);
           if (err.fieldErrors) {
             setFieldErrors(err.fieldErrors);

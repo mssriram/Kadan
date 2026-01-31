@@ -6,6 +6,7 @@ import com.example.kadan.entity.User;
 import com.example.kadan.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,10 @@ public class UserService {
         }
         if (updateDto.defaultCurrency() != null) {
             user.setDefaultCurrency(updateDto.defaultCurrency());
+        }
+
+        if (userRepository.findByEmail(updateDto.email()).isPresent()) {
+            throw new DataIntegrityViolationException("Email already in use");
         }
 
         User updatedUser = userRepository.save(user);
