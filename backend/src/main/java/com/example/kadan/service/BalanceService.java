@@ -6,7 +6,6 @@ import com.example.kadan.dto.SettlementDto;
 import com.example.kadan.dto.SettlementResponseDto;
 import com.example.kadan.dto.UserGroupBalancesDto;
 import com.example.kadan.dto.enums.DebtStrategy;
-import com.example.kadan.dto.enums.GroupStatus;
 import com.example.kadan.entity.Group;
 import com.example.kadan.entity.Settlement;
 import com.example.kadan.entity.User;

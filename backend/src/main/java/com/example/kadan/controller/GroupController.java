@@ -1,8 +1,10 @@
 package com.example.kadan.controller;
 
 import com.example.kadan.config.JwtUserPrincipal;
+import com.example.kadan.dto.AddMemberDto;
 import com.example.kadan.dto.CreateGroupResponseDto;
 import com.example.kadan.dto.GroupDto;
+import com.example.kadan.dto.GroupMemberResponseDto;
 import com.example.kadan.dto.GroupResponseDto;
 import com.example.kadan.dto.UpdateGroupDto;
 import com.example.kadan.service.GroupService;
@@ -48,13 +50,18 @@ public class GroupController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{groupId}/members/{memberId}")
+//    @PostMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<GroupResponseDto> addMemberToGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID memberId) {
         groupService.addMemberToGroup(principal.id(), groupId, memberId);
         return ResponseEntity.ok().build();
     }
 
-    //TODO default simplify debts to false, and initialise group only with owner as member
+    @PostMapping("/{groupId}/members")
+    public ResponseEntity<GroupMemberResponseDto> addMemberToGroupByEmail(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @RequestBody AddMemberDto addMemberDto) {
+        GroupMemberResponseDto response = groupService.addMemberToGroupByEmail(principal.id(), groupId, addMemberDto);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     public ResponseEntity<CreateGroupResponseDto> createGroup(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody GroupDto groupDto) {
         CreateGroupResponseDto response = groupService.createGroup(principal.id(), groupDto);

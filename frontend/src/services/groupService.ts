@@ -335,6 +335,17 @@ export const getGroupBalances = async (groupId: string): Promise<GroupBalances> 
 };
 
 /**
+ * Add a member to a group by email.
+ * POST /api/groups/{groupId}/members
+ * 
+ * @throws ApiException with status 404 if group or user not found
+ * @throws ApiException with status 409 if maximum group size reached
+ */
+export const addMemberByEmail = async (groupId: string, email: string): Promise<ApiUserProfile> => {
+  return api.post<ApiUserProfile>(`/groups/${groupId}/members`, { email });
+};
+
+/**
  * Remove a member from a group.
  * DELETE /api/groups/{groupId}/members/{memberId}
  * 
@@ -427,6 +438,7 @@ export const groupService = {
   deleteExpense,
   updateGroup,
   deleteGroup,
+  addMemberByEmail,
   removeMember,
   recordSettlement,
   getGroupExpenses,

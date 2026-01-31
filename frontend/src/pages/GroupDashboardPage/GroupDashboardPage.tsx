@@ -75,6 +75,9 @@ export const GroupDashboardPage: React.FC = () => {
   const [isDeleteConfirmPending, setIsDeleteConfirmPending] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [addMemberEmail, setAddMemberEmail] = useState('');
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [addMemberError, setAddMemberError] = useState('');
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -779,15 +782,43 @@ export const GroupDashboardPage: React.FC = () => {
       {/* Add Member Modal */}
       <Modal
         isOpen={isAddMemberModalOpen}
-        onClose={() => setIsAddMemberModalOpen(false)}
+        onClose={() => {
+          setIsAddMemberModalOpen(false);
+          setAddMemberEmail('');
+          setAddMemberError('');
+        }}
         title="Add Member"
       >
         <form
           className="modal-form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // TODO: Implement add member
-            setIsAddMemberModalOpen(false);
+            if (!addMemberEmail.trim() || !groupId) return;
+            
+            setIsAddingMember(true);
+            setAddMemberError('');
+            
+            try {
+              await groupService.addMemberByEmail(groupId, addMemberEmail.trim());
+              setIsAddMemberModalOpen(false);
+              setAddMemberEmail('');
+              // Refresh group data to show new member
+              fetchGroupData();
+            } catch (err) {
+              if (err instanceof ApiException) {
+                if (err.status === 404) {
+                  setAddMemberError('User not found. Please check the email address.');
+                } else if (err.status === 409) {
+                  setAddMemberError('Maximum group size reached or user is already a member.');
+                } else {
+                  setAddMemberError(err.message || 'Failed to add member.');
+                }
+              } else {
+                setAddMemberError('Failed to add member. Please try again.');
+              }
+            } finally {
+              setIsAddingMember(false);
+            }
           }}
         >
           <div className="form-group">
@@ -796,14 +827,30 @@ export const GroupDashboardPage: React.FC = () => {
               id="member-email"
               type="email"
               placeholder="Enter email address"
+              value={addMemberEmail}
+              onChange={(e) => {
+                setAddMemberEmail(e.target.value);
+                setAddMemberError('');
+              }}
+              disabled={isAddingMember}
             />
+            {addMemberError && <p className="form-error">{addMemberError}</p>}
           </div>
           <div className="modal-actions">
-            <Button type="button" variant="secondary" onClick={() => setIsAddMemberModalOpen(false)}>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => {
+                setIsAddMemberModalOpen(false);
+                setAddMemberEmail('');
+                setAddMemberError('');
+              }}
+              disabled={isAddingMember}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
-              Add Member
+            <Button type="submit" variant="primary" disabled={isAddingMember || !addMemberEmail.trim()}>
+              {isAddingMember ? 'Adding...' : 'Add Member'}
             </Button>
           </div>
         </form>
