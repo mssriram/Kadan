@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public record UpdateUserProfileDto(
-        @Email(message = "Email should be valid")
+        @Email(message = "Invalid Email format")
         String email,
 
         @Size(max = 100, message = "Display name must not exceed 100 characters")

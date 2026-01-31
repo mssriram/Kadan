@@ -22,18 +22,13 @@ import { config } from '@/config/environment';
 import type { User } from '@/types';
 import './DashboardPage.css';
 
-// ========================================
-// API RESPONSE TYPES
-// ========================================
-
-/** Group item from GET /api/groups */
+// API Response Types
 interface GroupResponse {
   id: string;
   name: string;
   description?: string;
 }
 
-/** Balance item from GET /api/balances */
 interface BalanceResponse {
   groupId: string;
   groupName: string;
@@ -42,65 +37,42 @@ interface BalanceResponse {
   netBalance: number;
 }
 
-/** Aggregated dashboard stats */
 interface DashboardStats {
   totalPaid: number;
   totalOwed: number;
   netBalance: number;
 }
 
-/**
- * Format currency amount for display.
- * Uses INR formatting by default.
- */
-const formatCurrency = (amount: number, currency = 'INR'): string => {
-  return new Intl.NumberFormat('en-IN', {
+const formatCurrency = (amount: number, currency = 'INR'): string =>
+  new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
-};
 
-/**
- * DashboardPage displays the user's groups and overall balance summary.
- * Fetches data from /api/groups and /api/balances endpoints.
- */
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  // User is guaranteed to exist because ProtectedRoute checks auth
   const [currentUser, setCurrentUser] = useState<User>(authService.getCurrentUser()!);
-
-  // State for groups and balances
   const [groups, setGroups] = useState<GroupResponse[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalPaid: 0,
-    totalOwed: 0,
-    netBalance: 0,
-  });
+  const [stats, setStats] = useState<DashboardStats>({ totalPaid: 0, totalOwed: 0, netBalance: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  /**
-   * Fetch groups and balances on component mount
-   */
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Fetch groups and balances in parallel
         const [groupsData, balancesData] = await Promise.all([
           api.get<GroupResponse[]>('/groups'),
           api.get<BalanceResponse[]>('/balances'),
         ]);
 
         setGroups(groupsData);
-
-        // Aggregate balance stats
         const aggregatedStats = balancesData.reduce(
           (acc, balance) => ({
             totalPaid: acc.totalPaid + balance.paid,
@@ -121,24 +93,13 @@ export const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  /**
-   * Handle group card click - navigate to group details
-   */
-  const handleGroupClick = (groupId: string) => {
-    navigate(`/app/groups/${groupId}`);
-  };
+  const handleGroupClick = (groupId: string) => navigate(`/app/groups/${groupId}`);
 
-  /**
-   * Handle logout action
-   */
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  /**
-   * Handle successful group creation - navigate to the new group
-   */
   const handleGroupCreated = (groupId: string) => {
     setIsCreateModalOpen(false);
     navigate(`/app/groups/${groupId}`);

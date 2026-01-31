@@ -41,18 +41,19 @@ public class ExpenseController {
         return ResponseEntity.ok(expense);
     }
 
+    //TODO update to include scenario where multiple people paid for the same expense
     @PostMapping
-    public ResponseEntity<Void> createExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
+    public ResponseEntity<ExpenseDto> createExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @Valid @RequestBody CreateExpenseDto request) {
         ExpenseValidator.validateCreateExpense(request);
-        expenseService.createExpense(principal.id(), groupId, request);
-        return ResponseEntity.ok().build();
+        ExpenseDto response = expenseService.createExpense(principal.id(), groupId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{expenseId}")
-    public ResponseEntity<Void> updateExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
+    public ResponseEntity<ExpenseDto> updateExpense(@AuthenticationPrincipal JwtUserPrincipal principal, @PathVariable UUID groupId, @PathVariable UUID expenseId, @Valid @RequestBody UpdateExpenseDto request) {
         ExpenseValidator.validateUpdateExpense(request);
-        expenseService.updateExpense(principal.id(), groupId, expenseId, request);
-        return ResponseEntity.ok().build();
+        ExpenseDto response = expenseService.updateExpense(principal.id(), groupId, expenseId, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{expenseId}")

@@ -35,7 +35,11 @@ public class GlobalExceptionHandler {
             case MethodArgumentNotValidException methodArgEx -> {
                 log.info("Validation failed: {}", methodArgEx.getMessage());
                 Map<String, String> message = methodArgEx.getBindingResult().getFieldErrors().stream()
-                        .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+                        .collect(Collectors.toMap(
+                                FieldError::getField,
+                                FieldError::getDefaultMessage,
+                                (existing, replacement) -> existing + " | " + replacement
+                        ));
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponseDto(VALIDATION, message));
             }
@@ -54,7 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleEntityNotFoundException(EntityNotFoundException ex) {
-        log.info("EntityNotFoundException : {} ",ex.getMessage());
+        log.info("EntityNotFoundException : {} ", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 

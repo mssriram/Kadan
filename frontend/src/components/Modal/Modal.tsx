@@ -17,8 +17,8 @@ export interface ModalProps {
   isOpen: boolean;
   /** Callback when modal should close */
   onClose: () => void;
-  /** Modal title */
-  title: string;
+  /** Modal title (optional - if not provided, no header is shown) */
+  title?: string;
   /** Modal content */
   children: React.ReactNode;
   /** Optional max width (default: 480px) */
@@ -71,11 +71,11 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div className="modal-overlay" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-labelledby={title ? "modal-title" : undefined}>
       <div className="modal-content" style={{ maxWidth }}>
         {/* Header */}
-        <div className="modal-header">
-          <h2 id="modal-title" className="modal-title">{title}</h2>
+        <div className={`modal-header ${!title ? 'modal-header--no-title' : ''}`}>
+          {title && <h2 id="modal-title" className="modal-title">{title}</h2>}
           <button
             type="button"
             className="modal-close"

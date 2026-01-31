@@ -297,5 +297,5 @@ Leaving is performed via member removal (no separate endpoint).
 - `DELETE /api/groups/{groupId}/expenses/{expenseId}`
 
 ### 7.5 Balances and Settlements
-- `GET /api/groups/{groupId}/balances`
+- `GET /api/balances/{groupId}`
 - `POST /api/groups/{groupId}/settlement`

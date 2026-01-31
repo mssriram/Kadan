@@ -30,7 +30,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    //TODO does email as srraim@example accepted?
     @PatchMapping("/me")
     public ResponseEntity<UserProfileDto> updateCurrentUserProfile(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody UpdateUserProfileDto updateDto) {
         UserProfileDto updatedProfile = userService.updateUserProfile(principal.id(), updateDto);

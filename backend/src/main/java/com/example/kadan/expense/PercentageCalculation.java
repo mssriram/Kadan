@@ -13,7 +13,7 @@ import java.util.Map;
 public class PercentageCalculation implements ExpenseCalculationStrategy {
 
     public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-    public static final BigDecimal HUNDRED_THOUSAND = BigDecimal.valueOf(100000);
+    public static final BigDecimal TENTHOUSAND = BigDecimal.valueOf(10_000);
 
     @Override
     public SplitType getSplitType() {
@@ -25,7 +25,7 @@ public class PercentageCalculation implements ExpenseCalculationStrategy {
         Map<User, BigDecimal> result = new HashMap<>();
         for (User user : memberSplitDto.keySet()) {
             BigDecimal percentage = memberSplitDto.get(user).multiply(HUNDRED);
-            BigDecimal actualAmount = amount.getAmount().multiply(percentage).divide(HUNDRED_THOUSAND);
+            BigDecimal actualAmount = amount.getAmount().multiply(percentage).divide(TENTHOUSAND);
 
             result.put(user, actualAmount);
         }

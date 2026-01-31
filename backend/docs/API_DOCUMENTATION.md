@@ -458,18 +458,33 @@ Add a member to an existing group.
 
 ---
 
-### 4.7 Remove Member from Group
-Remove a member from a group.
+### 4.6a Add Member to Group by Email
+Add a member to an existing group using their email address.
 
-**Endpoint:** `DELETE /api/groups/{groupId}/members/{memberId}`
+**Endpoint:** `POST /api/groups/{groupId}/members/{email}`
 
 **Authentication:** Required
 
+**Path Parameters:**
+| Name    | Type   | Description                |
+|---------|--------|----------------------------|
+| groupId | UUID   | Unique group identifier    |
+| email   | string | Email of the user to add   |
+
 **Response:** `200 OK`
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "john@example.com",
+  "displayName": "John Doe",
+  "defaultCurrency": "INR",
+  "status": "ACTIVE"
+}
+```
 
 **Error Responses:**
-- `404` - Group or member not found
-- `409` - Cannot remove member with unsettled balance
+- `404` - Group or user not found
+- `409` - Maximum group size reached.
 
 ---
 
@@ -767,7 +782,7 @@ Delete an expense.
 ### 6.1 Get Group Balances
 Get all balances and debts within a group.
 
-**Endpoint:** `GET /api/groups/{groupId}/balances`
+**Endpoint:** `GET /api/balances/{groupId}`
 
 **Authentication:** Required
 
@@ -840,7 +855,7 @@ Get all balances and debts within a group.
 ### 7.1 Record Settlement
 Record a payment/settlement between users in a group.
 
-**Endpoint:** `POST /api/groups/{groupId}/settlement`
+**Endpoint:** `POST /api/balances/{groupId}/settlement`
 
 **Authentication:** Required
 
@@ -919,9 +934,9 @@ Record a payment/settlement between users in a group.
 | PATCH              | `/api/groups/{groupId}/expenses/{expenseId}` | Update expense              | Yes           |
 | DELETE             | `/api/groups/{groupId}/expenses/{expenseId}` | Delete expense              | Yes           |
 | **Balances**       |                                              |                             |               |
-| GET                | `/api/groups/{groupId}/balances`             | Get group balances          | Yes           |
+| GET                | `/api/balances/{groupId}`                    | Get group balances          | Yes           |
 | **Settlements**    |                                              |                             |               |
-| POST               | `/api/groups/{groupId}/settlement`           | Record settlement           | Yes           |
+| POST               | `/api/balances/{groupId}/settlement`         | Record settlement           | Yes           |
 
 ---
 

@@ -46,7 +46,7 @@ public class ExpenseService {
             throw new EntityNotFoundException("Group not found");
         }
 
-        List<Expense> expenses = expenseRepository.findAllByGroup(group).orElseThrow(() -> new EntityNotFoundException("No expenses found for the group"));
+        List<Expense> expenses = expenseRepository.findAllByGroupOrderByExpenseDateDesc(group).orElseThrow(() -> new EntityNotFoundException("No expenses found for the group"));
         return expenses.stream().map(ExpenseDto::fromEntity).toList();
     }
 
@@ -62,7 +62,7 @@ public class ExpenseService {
     }
 
     @Transactional
-    public void createExpense(UUID currentUser, UUID groupId, CreateExpenseDto request) {
+    public ExpenseDto createExpense(UUID currentUser, UUID groupId, CreateExpenseDto request) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
@@ -92,10 +92,13 @@ public class ExpenseService {
         Map<User, BigDecimal> userSplits = getExpenseMembers(request.splitType(), request.members(), group);
         List<ExpenseSplit> expenseSplitList = getExpenseSplits(request.splitType(), savedExpense, userSplits);
         expenseSplitRepository.saveAll(expenseSplitList);
+
+        savedExpense.setExpenseSplits(expenseSplitList);
+        return ExpenseDto.fromEntity(savedExpense);
     }
 
     @Transactional
-    public void updateExpense(UUID currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
+    public ExpenseDto updateExpense(UUID currentUser, UUID groupId, UUID expenseId, UpdateExpenseDto request) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("Group not found");
@@ -115,7 +118,11 @@ public class ExpenseService {
             expenseSplitRepository.deleteAllByExpense(expense);
             expenseSplitRepository.flush();
             expenseSplitRepository.saveAll(userSplits);
+
+            savedExpense.setExpenseSplits(userSplits);
         }
+
+        return ExpenseDto.fromEntity(savedExpense);
     }
 
     private Map<User, BigDecimal> getExpenseMembers(SplitType splitType, List<MemberSplitDto> members, Group group) {

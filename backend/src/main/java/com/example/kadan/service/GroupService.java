@@ -1,8 +1,10 @@
 package com.example.kadan.service;
 
+import com.example.kadan.dto.AddMemberDto;
 import com.example.kadan.dto.BalanceResponseDto;
 import com.example.kadan.dto.CreateGroupResponseDto;
 import com.example.kadan.dto.GroupDto;
+import com.example.kadan.dto.GroupMemberResponseDto;
 import com.example.kadan.dto.GroupResponseDto;
 import com.example.kadan.dto.UpdateGroupDto;
 import com.example.kadan.dto.enums.GroupStatus;
@@ -75,10 +77,8 @@ public class GroupService {
         return GroupResponseDto.fromEntity(updatedGroup);
     }
 
-    //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
-    //TODO max members should be less than 20
     @Transactional
-    public void addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
+    public GroupMemberResponseDto addMemberToGroup(UUID currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("User not found");
@@ -90,16 +90,22 @@ public class GroupService {
         //Return success if member already part of group
         if (group.hasMember(memberId)) {
             log.info("User {} is already a member of group {}", memberId, groupId);
-            return;
+            return null;
         }
 
         User newMember = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
-        groupMemberRepository.save(groupMember);
+        GroupMember savedGroupMember = groupMemberRepository.save(groupMember);
+
+        return GroupMemberResponseDto.fromEntity(savedGroupMember);
     }
 
-    //TODO Users other than owner in should be in pending state in group memeber repo until they accept.
+    public GroupMemberResponseDto addMemberToGroupByEmail(UUID id, UUID groupId, AddMemberDto addMemberDto) {
+        User user = userRepository.findByEmail(addMemberDto.email()).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return addMemberToGroup(id, groupId, user.getId());
+    }
+
     @Transactional
     public CreateGroupResponseDto createGroup(UUID currentUser, GroupDto groupDto) {
         User groupCreatorUser = userRepository.findById(currentUser).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -108,33 +114,17 @@ public class GroupService {
         group.setName(groupDto.name());
         group.setDescription(groupDto.description());
         group.setCreatedBy(groupCreatorUser);
-        group.setSimplifyDebts(groupDto.simplifyDebts());
+        group.setSimplifyDebts(false);
         group.setStatus(GroupStatus.ACTIVE);
         Group savedGroup = groupRepository.save(group);
 
-        List<User> members = userRepository.findByEmailIn(groupDto.members());
-
-        if (members.size() > maxGroupMembers) {
-            throw new DataIntegrityViolationException("Cannot add more members to the group. Maximum limit reached.");
-        }
-
-        List<GroupMember> groupMembers = members.stream()
-                .map(user -> user.getId() == currentUser ?
-                        new GroupMember(savedGroup, user, UserRole.OWNER) :
-                        new GroupMember(savedGroup, user, UserRole.MEMBER))
-                .toList();
-
-        boolean creatorInList = members.stream().anyMatch(user -> user.getId().equals(currentUser));
-        if (!creatorInList) {
-            GroupMember creatorMember = new GroupMember(savedGroup, groupCreatorUser, UserRole.OWNER);
-            groupMemberRepository.save(creatorMember);
-        }
+        GroupMember creatorMember = new GroupMember(savedGroup, groupCreatorUser, UserRole.OWNER);
+        groupMemberRepository.save(creatorMember);
 
         return CreateGroupResponseDto.fromEntity(savedGroup);
     }
 
     //TODO If owner is removed, transfer ownership to another member.
-    //TODO Prevent removing self if owner and other members exist. maybe possible.
     @Transactional
     public void removeMemberFromGroup(UUID currentUser, UUID groupId, UUID memberId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
@@ -154,7 +144,6 @@ public class GroupService {
         groupMemberRepository.deleteByGroupAndUser(group, memberToRemove);
     }
 
-    //TODO maybe consider only owners can delete groups.
     @Transactional
     public void deleteGroup(UUID currentUser, UUID groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
@@ -169,5 +158,4 @@ public class GroupService {
 
         groupRepository.delete(group);
     }
-
 }
