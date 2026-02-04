@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -19,8 +20,19 @@ public class DebtCalculationFactory {
         this.expenseSplitRepository = expenseSplitRepository;
     }
 
-    public DebtCalculationStrategy strategy(DebtStrategy strategyType) {
-        return strategies.get(strategyType);
+    public DebtCalculationStrategy strategy(boolean isSimplifyDebts) {
+        DebtStrategy debtStrategy = isSimplifyDebts ? DebtStrategy.NONEWTRANSFERS : DebtStrategy.MINFLOW;
+        return strategies.get(debtStrategy);
+    }
+
+    public List<Debt> calculateDebts(UUID groupId, boolean isSimplifyDebts) {
+        DebtStrategy strategy = isSimplifyDebts ? DebtStrategy.NONEWTRANSFERS : DebtStrategy.MINFLOW;
+        if (isSimplifyDebts) {
+            return null;
+        } else {
+            List<ExpenseSplitRepository.GroupBalance> balances = expenseSplitRepository.findGroupBalances(groupId);
+            return strategies.get(strategy).calculateDebts(balances);
+        }
     }
 
 }
