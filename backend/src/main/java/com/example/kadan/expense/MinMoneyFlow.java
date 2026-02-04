@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,12 +22,16 @@ public class MinMoneyFlow implements DebtCalculationStrategy {
 
     @Override
     public List<Debt> calculateDebts(List<ExpenseSplitRepository.GroupBalance> groupBalance) {
-        Map<UUID, BigDecimal> owes = groupBalance.stream()
-                .filter(e -> e.getNetBalance().compareTo(BigDecimal.ZERO) < 0)
-                .collect(Collectors.toMap(ExpenseSplitRepository.GroupBalance::getUserId, ExpenseSplitRepository.GroupBalance::getNetBalance));
-        Map<UUID, BigDecimal> paid = groupBalance.stream()
-                .filter(e -> e.getNetBalance().compareTo(BigDecimal.ZERO) > 0)
-                .collect(Collectors.toMap(ExpenseSplitRepository.GroupBalance::getUserId, ExpenseSplitRepository.GroupBalance::getNetBalance));
+        Map<UUID, BigDecimal> owes = new HashMap<>();
+        Map<UUID, BigDecimal> paid = new HashMap<>();
+
+        for (ExpenseSplitRepository.GroupBalance gb : groupBalance) {
+            if (gb.getNetBalance().compareTo(BigDecimal.ZERO) < 0) {
+                owes.put(gb.getUserId(), gb.getNetBalance());
+            } else if (gb.getNetBalance().compareTo(BigDecimal.ZERO) > 0) {
+                paid.put(gb.getUserId(), gb.getNetBalance());
+            }
+        }
 
         List<Debt> result = new ArrayList<>();
         while (!owes.isEmpty() && !paid.isEmpty()) {
