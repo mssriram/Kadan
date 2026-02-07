@@ -15,6 +15,9 @@ import com.example.kadan.entity.User;
 import com.example.kadan.repository.GroupMemberRepository;
 import com.example.kadan.repository.GroupRepository;
 import com.example.kadan.repository.UserRepository;
+import com.example.kadan.service.activity.ActivityLogService;
+import com.example.kadan.service.activity.GroupActivityLog;
+import com.example.kadan.service.activity.MemberActivityLog;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +32,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.kadan.dto.enums.ActivityType.GROUP_UPDATED;
+import static com.example.kadan.dto.enums.ActivityType.MEMBER_ADDED;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +47,7 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public List<GroupResponseDto> getGroups(UUID currentUser) {
@@ -52,8 +59,8 @@ public class GroupService {
     }
 
     @Transactional
-    public GroupResponseDto getGroupById(UUID currentUser, UUID id) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+    public GroupResponseDto getGroupById(UUID currentUser, UUID groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("User not found");
         }
@@ -62,8 +69,8 @@ public class GroupService {
     }
 
     @Transactional
-    public GroupResponseDto updateGroup(UUID currentUser, UUID id, UpdateGroupDto groupDto) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group not found"));
+    public GroupResponseDto updateGroup(UUID currentUser, UUID groupId, UpdateGroupDto groupDto) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("Group not found"));
         if (!group.hasMember(currentUser)) {
             throw new EntityNotFoundException("User not found");
         }
@@ -73,6 +80,8 @@ public class GroupService {
         if (groupDto.simplifyDebts() != null) group.setSimplifyDebts(groupDto.simplifyDebts());
         if (StringUtils.isNotBlank(groupDto.currency())) group.setCurrency(groupDto.currency());
         Group updatedGroup = groupRepository.save(group);
+
+        activityLogService.logActivity(GROUP_UPDATED, new GroupActivityLog(group.findMember(currentUser), updatedGroup), group, updatedGroup);
 
         return GroupResponseDto.fromEntity(updatedGroup);
     }
@@ -97,6 +106,8 @@ public class GroupService {
 
         GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
         GroupMember savedGroupMember = groupMemberRepository.save(groupMember);
+
+        activityLogService.logActivity(MEMBER_ADDED, new MemberActivityLog(group.findMember(currentUser), savedGroupMember), group, savedGroupMember.getGroup());
 
         return GroupMemberResponseDto.fromEntity(savedGroupMember);
     }

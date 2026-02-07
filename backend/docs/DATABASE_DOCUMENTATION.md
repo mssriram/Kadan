@@ -311,7 +311,7 @@ CREATE INDEX idx_settlements_group_status ON settlements(group_id, status);
 
 ### 3.7 activities
 
-Stores activity log for audit and activity feeds.
+Stores activityLog log for audit and activityLog feeds.
 
 ```sql
 CREATE TABLE activities (
@@ -341,24 +341,37 @@ CREATE INDEX idx_activities_metadata ON activities USING GIN (metadata);
 | id            | UUID         | PK, NOT NULL | Unique identifier          |
 | group_id      | UUID         | FK, NULLABLE | Reference to groups table  |
 | actor_id      | UUID         | FK, NOT NULL | User who performed action  |
-| activity_type | VARCHAR(50)  | NOT NULL     | Type of activity           |
+| activity_type | VARCHAR(50)  | NOT NULL     | Type of activityLog           |
 | description   | VARCHAR(500) | NOT NULL     | Human-readable description |
 | metadata      | JSONB        | NULLABLE     | Additional structured data |
 | created_at    | TIMESTAMP    | DEFAULT NOW  | Activity timestamp         |
 
 **Activity Types:**
 - `USER_REGISTERED`
-- `USER_LOGIN`
-- `GROUP_CREATED`
-- `GROUP_UPDATED`
-- `GROUP_DELETED`
-- `MEMBER_ADDED`
-- `MEMBER_REMOVED`
-- `EXPENSE_CREATED`
-- `EXPENSE_UPDATED`
-- `EXPENSE_DELETED`
-- `SETTLEMENT_ADDED`
+  - `USER_LOGIN`
+  - `GROUP_CREATED`
+  - `GROUP_UPDATED`
+  - `GROUP_DELETED`
+  - `MEMBER_ADDED`
+  - `MEMBER_REMOVED`
+  - `EXPENSE_CREATED`
+  - `EXPENSE_UPDATED`
+  - `EXPENSE_DELETED`
+  - `SETTLEMENT_ADDED`
 ---
+
+**Examples:**  
+- `JohnDoe` user created.   User
+  - `JohnDoe` user logged in. User
+  - `JohnDoe` created group `Weekend Trip`.  User, Group
+  - `JohnDoe` updated group.   User, Group
+  - `JohnDoe` deleted group.   User, Group
+  - `JohnDoe` added `JaneSmith`.   User, Member
+  - `JohnDoe` removed `JaneSmith`.  User, Member
+  - `JohnDoe` added expense `Dinner`(`500 INR`).    User, Expense
+  - `JohnDoe` updated expense `Dinner`(`500 INR`).  User, Expense
+  - `JohnDoe` deleted expense `Dinner`(`500 INR`).  User, Expense
+  - `JohnDoe` settled `200 INR` with `JaneSmith`.   User, Settlement
 
 ### 3.8 currencies
 

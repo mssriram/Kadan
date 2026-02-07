@@ -67,4 +67,11 @@ public class Group {
     public boolean hasMember(UUID userId) {
         return getMembers().stream().anyMatch(member -> member.getId().equals(userId));
     }
+
+    public User findMember(UUID userId) {
+        return getMembers().stream()
+                .filter(member -> member.getId().equals(userId))
+                .findFirst()
+                .orElse(null);
+    }
 }
