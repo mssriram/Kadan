@@ -44,7 +44,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        publisher.publishEvent(new ActivityEvent(USER_REGISTERED, new UserActivityLog(savedUser), null, savedUser));
+        publisher.publishEvent(new ActivityEvent(USER_REGISTERED, new UserActivityLog(savedUser), savedUser));
 
         return savedUser;
     }
@@ -55,7 +55,7 @@ public class AuthService {
 
         User loggedInUser = (User) authentication.getPrincipal();
 
-        publisher.publishEvent(new ActivityEvent(USER_LOGIN, new UserActivityLog(loggedInUser), null, loggedInUser));
+        publisher.publishEvent(new ActivityEvent(USER_LOGIN, new UserActivityLog(loggedInUser), loggedInUser));
 
         return loggedInUser;
     }

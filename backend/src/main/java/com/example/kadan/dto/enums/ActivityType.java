@@ -3,6 +3,7 @@ package com.example.kadan.dto.enums;
 public enum ActivityType {
     USER_REGISTERED,
     USER_LOGIN,
+    USER_UPDATE,
     GROUP_CREATED,
     GROUP_UPDATED,
     GROUP_DELETED,

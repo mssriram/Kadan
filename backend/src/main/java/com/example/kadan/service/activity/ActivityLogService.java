@@ -2,7 +2,6 @@ package com.example.kadan.service.activity;
 
 import com.example.kadan.dto.enums.ActivityType;
 import com.example.kadan.entity.Activity;
-import com.example.kadan.entity.Expense;
 import com.example.kadan.repository.ActivityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,7 +33,7 @@ public class ActivityLogService {
         activity.setUser(event.getActivityLog().getUser());
         activity.setGroup(event.getActivityLog().getGroup());
         activity.setDescription(event.getDescription());
-        activity.setMetadata(Map.of("before", Optional.ofNullable(event.getBefore()).orElse(""), "after", Optional.ofNullable(event.getAfter()).orElse("")));
+        activity.setMetadata(Map.of("object", Optional.ofNullable(event.getMetadata()).orElse("")));
         activityRepository.save(activity);
     }
 

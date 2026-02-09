@@ -26,6 +26,7 @@ public class UserActivityLog implements ActivityLog {
         switch (activityType) {
             case USER_REGISTERED -> sb.append(" registered an account.");
             case USER_LOGIN -> sb.append(" logged in.");
+            case USER_UPDATE -> sb.append(" updated their profile.");
             default -> sb.append(" performed an action.");
         }
         return sb.toString();
