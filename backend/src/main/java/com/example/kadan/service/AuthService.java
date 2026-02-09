@@ -2,6 +2,7 @@ package com.example.kadan.service;
 
 import com.example.kadan.dto.LoginUserDto;
 import com.example.kadan.dto.RegisterUserDto;
+import com.example.kadan.dto.UserProfileDto;
 import com.example.kadan.dto.enums.UserStatus;
 import com.example.kadan.entity.User;
 import com.example.kadan.repository.UserRepository;
@@ -29,7 +30,7 @@ public class AuthService {
     private final ApplicationEventPublisher publisher;
 
     @Transactional
-    public User registerUser(RegisterUserDto userDto) {
+    public UserProfileDto registerUser(RegisterUserDto userDto) {
         if (userRepository.findByEmail(userDto.email()).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
@@ -44,9 +45,9 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        publisher.publishEvent(new ActivityEvent(USER_REGISTERED, new UserActivityLog(savedUser), savedUser));
+        publisher.publishEvent(new ActivityEvent(USER_REGISTERED, new UserActivityLog(savedUser), UserProfileDto.fromEntity(savedUser)));
 
-        return savedUser;
+        return UserProfileDto.fromEntity(savedUser);
     }
 
     @Transactional
@@ -55,7 +56,7 @@ public class AuthService {
 
         User loggedInUser = (User) authentication.getPrincipal();
 
-        publisher.publishEvent(new ActivityEvent(USER_LOGIN, new UserActivityLog(loggedInUser), loggedInUser));
+        publisher.publishEvent(new ActivityEvent(USER_LOGIN, new UserActivityLog(loggedInUser), UserProfileDto.fromEntity(loggedInUser)));
 
         return loggedInUser;
     }

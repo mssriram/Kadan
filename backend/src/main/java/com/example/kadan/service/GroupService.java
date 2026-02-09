@@ -15,6 +15,7 @@ import com.example.kadan.entity.User;
 import com.example.kadan.repository.GroupMemberRepository;
 import com.example.kadan.repository.GroupRepository;
 import com.example.kadan.repository.UserRepository;
+import com.example.kadan.service.activity.ActivityEvent;
 import com.example.kadan.service.activity.ActivityLogService;
 import com.example.kadan.service.activity.GroupActivityLog;
 import com.example.kadan.service.activity.MemberActivityLog;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +34,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.kadan.dto.enums.ActivityType.GROUP_CREATED;
+import static com.example.kadan.dto.enums.ActivityType.GROUP_DELETED;
 import static com.example.kadan.dto.enums.ActivityType.GROUP_UPDATED;
 import static com.example.kadan.dto.enums.ActivityType.MEMBER_ADDED;
+import static com.example.kadan.dto.enums.ActivityType.MEMBER_REMOVED;
 
 @Slf4j
 @Service
@@ -48,6 +53,7 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public List<GroupResponseDto> getGroups(UUID currentUser) {
@@ -81,7 +87,7 @@ public class GroupService {
         if (StringUtils.isNotBlank(groupDto.currency())) group.setCurrency(groupDto.currency());
         Group updatedGroup = groupRepository.save(group);
 
-        activityLogService.logActivity(GROUP_UPDATED, new GroupActivityLog(group.findMember(currentUser), updatedGroup), group, updatedGroup);
+        publisher.publishEvent(new ActivityEvent(GROUP_UPDATED, new GroupActivityLog(group.findMember(currentUser), updatedGroup), GroupResponseDto.fromEntity(updatedGroup)));
 
         return GroupResponseDto.fromEntity(updatedGroup);
     }
@@ -107,7 +113,7 @@ public class GroupService {
         GroupMember groupMember = new GroupMember(group, newMember, UserRole.MEMBER);
         GroupMember savedGroupMember = groupMemberRepository.save(groupMember);
 
-        activityLogService.logActivity(MEMBER_ADDED, new MemberActivityLog(group.findMember(currentUser), savedGroupMember), group, savedGroupMember.getGroup());
+        publisher.publishEvent(new ActivityEvent(MEMBER_ADDED, new MemberActivityLog(group.findMember(currentUser), savedGroupMember), GroupMemberResponseDto.fromEntity(savedGroupMember)));
 
         return GroupMemberResponseDto.fromEntity(savedGroupMember);
     }
@@ -132,6 +138,8 @@ public class GroupService {
         GroupMember creatorMember = new GroupMember(savedGroup, groupCreatorUser, UserRole.OWNER);
         groupMemberRepository.save(creatorMember);
 
+        publisher.publishEvent(new ActivityEvent(GROUP_CREATED, new GroupActivityLog(groupCreatorUser, savedGroup), CreateGroupResponseDto.fromEntity(savedGroup)));
+
         return CreateGroupResponseDto.fromEntity(savedGroup);
     }
 
@@ -152,7 +160,9 @@ public class GroupService {
         }
 
         User memberToRemove = userRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        groupMemberRepository.deleteByGroupAndUser(group, memberToRemove);
+        GroupMember groupMember = groupMemberRepository.deleteByGroupAndUser(group, memberToRemove);
+
+        publisher.publishEvent(new ActivityEvent(MEMBER_REMOVED, new MemberActivityLog(group.findMember(currentUser), groupMember), GroupMemberResponseDto.fromEntity(groupMember)));
     }
 
     @Transactional
@@ -168,5 +178,7 @@ public class GroupService {
         }
 
         groupRepository.delete(group);
+
+        publisher.publishEvent(new ActivityEvent(GROUP_DELETED, new GroupActivityLog(group.findMember(currentUser), group), CreateGroupResponseDto.fromEntity(group)));
     }
 }

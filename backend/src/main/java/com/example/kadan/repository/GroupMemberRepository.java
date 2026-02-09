@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface GroupMemberRepository extends CrudRepository<GroupMember, UUID> {
 
-    void deleteByGroupAndUser(Group group, User user);
+    GroupMember deleteByGroupAndUser(Group group, User user);
 
 }
 

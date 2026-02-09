@@ -31,7 +31,7 @@ public class ActivityLogService {
         Activity activity = new Activity();
         activity.setActivityType(event.getActivityType());
         activity.setUser(event.getActivityLog().getUser());
-        activity.setGroup(event.getActivityLog().getGroup());
+        activity.setGroup(event.getActivityType().equals(ActivityType.GROUP_DELETED) ? null : event.getActivityLog().getGroup());
         activity.setDescription(event.getDescription());
         activity.setMetadata(Map.of("object", Optional.ofNullable(event.getMetadata()).orElse("")));
         activityRepository.save(activity);
