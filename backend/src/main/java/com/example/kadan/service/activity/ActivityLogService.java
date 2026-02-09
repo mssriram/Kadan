@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
 @Service
@@ -31,7 +35,8 @@ public class ActivityLogService {
         activity.setUser(event.getActivityLog().getUser());
         activity.setGroup(event.getActivityLog().getGroup());
         activity.setDescription(event.getDescription());
-        log.info(activity.getDescription());
+        activity.setMetadata(Map.of("before", Optional.ofNullable(event.getBefore()).orElse(""), "after", Optional.ofNullable(event.getAfter()).orElse("")));
+        activityRepository.save(activity);
     }
 
     @Async
