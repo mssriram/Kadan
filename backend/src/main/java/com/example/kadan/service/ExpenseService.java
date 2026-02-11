@@ -15,6 +15,8 @@ import com.example.kadan.expense.ExpenseCalculationFactory;
 import com.example.kadan.repository.ExpenseRepository;
 import com.example.kadan.repository.ExpenseSplitRepository;
 import com.example.kadan.repository.GroupRepository;
+import com.example.kadan.service.activity.ActivityLogService;
+import com.example.kadan.service.activity.ExpenseActivityLog;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -29,6 +31,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.kadan.dto.enums.ActivityType.EXPENSE_CREATED;
+import static com.example.kadan.dto.enums.ActivityType.EXPENSE_DELETED;
+import static com.example.kadan.dto.enums.ActivityType.EXPENSE_UPDATED;
+
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
@@ -38,6 +44,8 @@ public class ExpenseService {
     private final ExpenseSplitRepository expenseSplitRepository;
     private final ExpenseCalculationFactory expenseCalcFactory;
     private final DebtCalculationFactory balanceCalcFactory;
+    private final ActivityLogService activityService;
+
 
     @Transactional
     public List<ExpenseDto> getAllExpenses(UUID currentUser, UUID groupId) {
@@ -93,6 +101,8 @@ public class ExpenseService {
         List<ExpenseSplit> expenseSplitList = getExpenseSplits(request.splitType(), savedExpense, userSplits);
         expenseSplitRepository.saveAll(expenseSplitList);
 
+        activityService.logActivity(EXPENSE_CREATED, new ExpenseActivityLog(expenseCreator, savedExpense), null, savedExpense);
+
         savedExpense.setExpenseSplits(expenseSplitList);
         return ExpenseDto.fromEntity(savedExpense);
     }
@@ -121,6 +131,8 @@ public class ExpenseService {
 
             savedExpense.setExpenseSplits(userSplits);
         }
+
+        activityService.logActivity(EXPENSE_UPDATED, new ExpenseActivityLog(group.findMember(currentUser), savedExpense), null, savedExpense);
 
         return ExpenseDto.fromEntity(savedExpense);
     }
@@ -167,6 +179,8 @@ public class ExpenseService {
 
         Expense expense = expenseRepository.findById(expenseId).orElseThrow(() -> new EntityNotFoundException("Expense not found"));
         expenseRepository.delete(expense);
+
+        activityService.logActivity(EXPENSE_DELETED, new ExpenseActivityLog(group.findMember(currentUser), expense), null, expense);
     }
 }
 

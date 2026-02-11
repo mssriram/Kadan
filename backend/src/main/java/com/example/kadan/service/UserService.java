@@ -2,10 +2,14 @@ package com.example.kadan.service;
 
 import com.example.kadan.dto.UpdateUserProfileDto;
 import com.example.kadan.dto.UserProfileDto;
+import com.example.kadan.dto.enums.ActivityType;
 import com.example.kadan.entity.User;
 import com.example.kadan.repository.UserRepository;
+import com.example.kadan.service.activity.ActivityEvent;
+import com.example.kadan.service.activity.UserActivityLog;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +21,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-
-//    public UserProfileDto getCurrentUserProfile(User currentUser) {
-//        return UserProfileDto.fromEntity(currentUser);
-//    }
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public UserProfileDto updateUserProfile(UUID currentUser, UpdateUserProfileDto updateDto) {
@@ -40,6 +41,9 @@ public class UserService {
         }
 
         User updatedUser = userRepository.save(user);
+
+        publisher.publishEvent(new ActivityEvent(ActivityType.USER_UPDATE, new UserActivityLog(updatedUser), updatedUser));
+
         return UserProfileDto.fromEntity(updatedUser);
     }
 

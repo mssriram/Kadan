@@ -2,7 +2,6 @@ package com.example.kadan.controller;
 
 import com.example.kadan.dto.LoginUserDto;
 import com.example.kadan.dto.RegisterUserDto;
-import com.example.kadan.dto.RegisterUserResponseDto;
 import com.example.kadan.dto.UserProfileDto;
 import com.example.kadan.entity.User;
 import com.example.kadan.service.AuthService;
@@ -26,16 +25,9 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/public/register")
-    public ResponseEntity<RegisterUserResponseDto> register(@Valid @RequestBody RegisterUserDto userDto) {
-        User newUser = authService.registerUser(userDto);
-        RegisterUserResponseDto response = new RegisterUserResponseDto(
-                newUser.getId().toString(),
-                newUser.getEmail(),
-                newUser.getDisplayName(),
-                newUser.getDefaultCurrency(),
-                newUser.getStatus()
-        );
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    public ResponseEntity<UserProfileDto> register(@Valid @RequestBody RegisterUserDto userDto) {
+        UserProfileDto newUser = authService.registerUser(userDto);
+        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }
 
     @PostMapping("/public/login")
